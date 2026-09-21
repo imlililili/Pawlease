@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="24660" systemVersion="24A335" minimumToolsVersion="Automatic" sourceLanguage="Swift" usedWithCloudKit="false" userDefinedModelVersionIdentifier="">
+    <entity name="UserProfileEntity" representedClassName="UserProfileEntity" syncable="YES" codeGenerationType="class">
+        <attribute name="avatarEmoji" optional="YES" attributeType="String"/>
+        <attribute name="createdAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="displayName" optional="YES" attributeType="String"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+    </entity>
+    <entity name="PendingPostDraftEntity" representedClassName="PendingPostDraftEntity" syncable="YES" codeGenerationType="class">
+        <attribute name="caption" optional="YES" attributeType="String"/>
+        <attribute name="createdAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="localImagePath" optional="YES" attributeType="String"/>
+        <attribute name="source" optional="YES" attributeType="String"/>
+    </entity>
+    <entity name="CircleEntity" representedClassName="CircleEntity" syncable="YES" codeGenerationType="class">
+        <attribute name="createdAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="name" optional="YES" attributeType="String"/>
+        <attribute name="ownerProfileID" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="timezoneIdentifier" optional="YES" attributeType="String"/>
+        <relationship name="dailyPosts" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="DailyPostEntity" inverseName="circle" inverseEntity="DailyPostEntity"/>
+        <relationship name="members" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="MemberEntity" inverseName="circle" inverseEntity="MemberEntity"/>
+        <relationship name="pet" optional="YES" maxCount="1" deletionRule="Cascade" destinationEntity="PetEntity" inverseName="circle" inverseEntity="PetEntity"/>
+    </entity>
+    <entity name="MemberEntity" representedClassName="MemberEntity" syncable="YES" codeGenerationType="class">
+        <attribute name="avatarEmoji" optional="YES" attributeType="String"/>
+        <attribute name="displayName" optional="YES" attributeType="String"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="joinedAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="profileID" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="role" optional="YES" attributeType="String"/>
+        <relationship name="circle" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="CircleEntity" inverseName="members" inverseEntity="CircleEntity"/>
+    </entity>
+    <entity name="PetEntity" representedClassName="PetEntity" syncable="YES" codeGenerationType="class">
+        <attribute name="createdAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="growthPoints" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="name" optional="YES" attributeType="String"/>
+        <attribute name="speciesKey" optional="YES" attributeType="String"/>
+        <attribute name="stage" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <relationship name="circle" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="CircleEntity" inverseName="pet" inverseEntity="CircleEntity"/>
+    </entity>
+    <entity name="DailyPostEntity" representedClassName="DailyPostEntity" syncable="YES" codeGenerationType="class">
+        <attribute name="authorNameSnapshot" optional="YES" attributeType="String"/>
+        <attribute name="authorProfileID" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="caption" optional="YES" attributeType="String"/>
+        <attribute name="createdAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="dayKey" optional="YES" attributeType="String"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="imageData" optional="YES" attributeType="Binary" allowsExternalBinaryDataStorage="YES"/>
+        <attribute name="moodEmoji" optional="YES" attributeType="String"/>
+        <attribute name="syncState" optional="YES" attributeType="String" defaultValueString="local"/>
+        <attribute name="thumbnailData" optional="YES" attributeType="Binary" allowsExternalBinaryDataStorage="YES"/>
+        <relationship name="circle" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="CircleEntity" inverseName="dailyPosts" inverseEntity="CircleEntity"/>
+        <relationship name="comments" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="CommentEntity" inverseName="dailyPost" inverseEntity="CommentEntity"/>
+        <relationship name="postReactions" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="PostReactionEntity" inverseName="dailyPost" inverseEntity="PostReactionEntity"/>
+    </entity>
+    <entity name="CommentEntity" representedClassName="CommentEntity" syncable="YES" codeGenerationType="class">
+        <attribute name="authorNameSnapshot" optional="YES" attributeType="String"/>
+        <attribute name="authorProfileID" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="body" optional="YES" attributeType="String"/>
+        <attribute name="createdAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="isRemoved" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <relationship name="commentReactions" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="CommentReactionEntity" inverseName="comment" inverseEntity="CommentReactionEntity"/>
+        <relationship name="dailyPost" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="DailyPostEntity" inverseName="comments" inverseEntity="DailyPostEntity"/>
+    </entity>
+    <entity name="PostReactionEntity" representedClassName="PostReactionEntity" syncable="YES" codeGenerationType="class">
+        <attribute name="authorProfileID" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="createdAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="emoji" optional="YES" attributeType="String"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <relationship name="dailyPost" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="DailyPostEntity" inverseName="postReactions" inverseEntity="DailyPostEntity"/>
+    </entity>
+    <entity name="CommentReactionEntity" representedClassName="CommentReactionEntity" syncable="YES" codeGenerationType="class">
+        <attribute name="authorProfileID" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="createdAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="emoji" optional="YES" attributeType="String"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <relationship name="comment" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="CommentEntity" inverseName="commentReactions" inverseEntity="CommentEntity"/>
+    </entity>
+    <elements>
+        <element name="UserProfileEntity" positionX="-380" positionY="-360" width="128" height="89"/>
+        <element name="PendingPostDraftEntity" positionX="-380" positionY="-240" width="128" height="104"/>
+        <element name="CircleEntity" positionX="-180" positionY="-360" width="128" height="134"/>
+        <element name="MemberEntity" positionX="0" positionY="-360" width="128" height="134"/>
+        <element name="PetEntity" positionX="0" positionY="-180" width="128" height="119"/>
+        <element name="DailyPostEntity" positionX="-180" positionY="-60" width="128" height="239"/>
+        <element name="CommentEntity" positionX="20" positionY="60" width="128" height="149"/>
+        <element name="PostReactionEntity" positionX="-360" positionY="60" width="128" height="104"/>
+        <element name="CommentReactionEntity" positionX="220" positionY="180" width="128" height="104"/>
+    </elements>
+</model>
