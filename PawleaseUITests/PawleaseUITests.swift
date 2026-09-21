@@ -10,32 +10,40 @@ import XCTest
 final class PawleaseUITests: XCTestCase {
 
     override func setUpWithError() throws {
-        // Put setup code here. This method is called before the invocation of each test method in the class.
-
-        // In UI tests it is usually best to stop immediately when a failure occurs.
         continueAfterFailure = false
-
-        // In UI tests it’s important to set the initial state - such as interface orientation - required for your tests before they run. The setUp method is a good place to do this.
     }
 
-    override func tearDownWithError() throws {
-        // Put teardown code here. This method is called after the invocation of each test method in the class.
-    }
-
+    /// Drives the real Phase 1 golden path: the seeded Circle appears on
+    /// launch, "Take Today's Photo" opens the Composer, Publish stays
+    /// disabled until a photo and caption are provided, and Cancel returns
+    /// to an unchanged Pet Home.
     @MainActor
-    func testExample() throws {
-        // UI tests must launch the application that they test.
+    func testPetHomeShowsSeededCircleAndComposerGatesPublish() throws {
         let app = XCUIApplication()
         app.launch()
 
-        // Use XCTAssert and related functions to verify your tests produce the correct results.
-        // XCUIAutomation Documentation
-        // https://developer.apple.com/documentation/xcuiautomation
+        let petHomeTitle = app.navigationBars["Pet Home"]
+        XCTAssertTrue(petHomeTitle.waitForExistence(timeout: 5))
+
+        XCTAssertTrue(app.staticTexts["Mochi"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["0 of 2 friends have shared today"].exists)
+        XCTAssertTrue(app.staticTexts["Feed Locked"].exists)
+
+        app.buttons["Take Today's Photo"].tap()
+
+        let composerTitle = app.navigationBars["Today's Moment"]
+        XCTAssertTrue(composerTitle.waitForExistence(timeout: 5))
+
+        let publishButton = app.buttons["Publish"]
+        XCTAssertTrue(publishButton.waitForExistence(timeout: 5))
+        XCTAssertFalse(publishButton.isEnabled)
+
+        app.buttons["Cancel"].tap()
+        XCTAssertTrue(petHomeTitle.waitForExistence(timeout: 5))
     }
 
     @MainActor
     func testLaunchPerformance() throws {
-        // This measures how long it takes to launch your application.
         measure(metrics: [XCTApplicationLaunchMetric()]) {
             XCUIApplication().launch()
         }
