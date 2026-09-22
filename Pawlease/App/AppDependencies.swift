@@ -13,6 +13,9 @@ final class AppDependencies {
     let memberRepository: MemberRepository
     let petRepository: PetRepository
     let momentRepository: MomentRepository
+    let commentRepository: CommentRepository
+    let momentReactionRepository: MomentReactionRepository
+    let commentReactionRepository: CommentReactionRepository
 
     let photoProcessingService: PhotoProcessingService
 
@@ -20,6 +23,11 @@ final class AppDependencies {
     let loadPetHomeUseCase: LoadPetHomeUseCase
     let loadTodayMomentsUseCase: LoadTodayMomentsUseCase
     let publishDailyMomentUseCase: PublishDailyMomentUseCase
+    let loadMomentDetailUseCase: LoadMomentDetailUseCase
+    let addCommentUseCase: AddCommentUseCase
+    let removeCommentUseCase: RemoveCommentUseCase
+    let reactToMomentUseCase: ReactToMomentUseCase
+    let reactToCommentUseCase: ReactToCommentUseCase
 
     init(
         persistenceController: PersistenceController,
@@ -36,11 +44,17 @@ final class AppDependencies {
         let memberRepo = CoreDataMemberRepository(container: container)
         let petRepo = CoreDataPetRepository(container: container)
         let momentRepo = CoreDataMomentRepository(container: container)
+        let commentRepo = CoreDataCommentRepository(container: container)
+        let momentReactionRepo = CoreDataMomentReactionRepository(container: container)
+        let commentReactionRepo = CoreDataCommentReactionRepository(container: container)
 
         self.circleRepository = circleRepo
         self.memberRepository = memberRepo
         self.petRepository = petRepo
         self.momentRepository = momentRepo
+        self.commentRepository = commentRepo
+        self.momentReactionRepository = momentReactionRepo
+        self.commentReactionRepository = commentReactionRepo
 
         self.seedDemoCircleUseCase = SeedDemoCircleUseCase(
             circleRepository: circleRepo,
@@ -59,6 +73,26 @@ final class AppDependencies {
         self.loadTodayMomentsUseCase = LoadTodayMomentsUseCase(momentRepository: momentRepo)
         self.publishDailyMomentUseCase = PublishDailyMomentUseCase(
             momentRepository: momentRepo,
+            clock: clock
+        )
+        self.loadMomentDetailUseCase = LoadMomentDetailUseCase(
+            momentRepository: momentRepo,
+            commentRepository: commentRepo,
+            momentReactionRepository: momentReactionRepo,
+            commentReactionRepository: commentReactionRepo
+        )
+        self.addCommentUseCase = AddCommentUseCase(
+            commentRepository: commentRepo,
+            momentRepository: momentRepo,
+            clock: clock
+        )
+        self.removeCommentUseCase = RemoveCommentUseCase(commentRepository: commentRepo)
+        self.reactToMomentUseCase = ReactToMomentUseCase(
+            momentReactionRepository: momentReactionRepo,
+            clock: clock
+        )
+        self.reactToCommentUseCase = ReactToCommentUseCase(
+            commentReactionRepository: commentReactionRepo,
             clock: clock
         )
     }

@@ -29,19 +29,34 @@ final class PetHomeViewModel {
     private let seedDemoCircleUseCase: SeedDemoCircleUseCase
     private let publishDailyMomentUseCase: PublishDailyMomentUseCase
     private let photoProcessingService: PhotoProcessingService
+    private let loadMomentDetailUseCase: LoadMomentDetailUseCase
+    private let addCommentUseCase: AddCommentUseCase
+    private let removeCommentUseCase: RemoveCommentUseCase
+    private let reactToMomentUseCase: ReactToMomentUseCase
+    private let reactToCommentUseCase: ReactToCommentUseCase
 
     init(
         loadPetHomeUseCase: LoadPetHomeUseCase,
         loadTodayMomentsUseCase: LoadTodayMomentsUseCase,
         seedDemoCircleUseCase: SeedDemoCircleUseCase,
         publishDailyMomentUseCase: PublishDailyMomentUseCase,
-        photoProcessingService: PhotoProcessingService
+        photoProcessingService: PhotoProcessingService,
+        loadMomentDetailUseCase: LoadMomentDetailUseCase,
+        addCommentUseCase: AddCommentUseCase,
+        removeCommentUseCase: RemoveCommentUseCase,
+        reactToMomentUseCase: ReactToMomentUseCase,
+        reactToCommentUseCase: ReactToCommentUseCase
     ) {
         self.loadPetHomeUseCase = loadPetHomeUseCase
         self.loadTodayMomentsUseCase = loadTodayMomentsUseCase
         self.seedDemoCircleUseCase = seedDemoCircleUseCase
         self.publishDailyMomentUseCase = publishDailyMomentUseCase
         self.photoProcessingService = photoProcessingService
+        self.loadMomentDetailUseCase = loadMomentDetailUseCase
+        self.addCommentUseCase = addCommentUseCase
+        self.removeCommentUseCase = removeCommentUseCase
+        self.reactToMomentUseCase = reactToMomentUseCase
+        self.reactToCommentUseCase = reactToCommentUseCase
     }
 
     func loadIfNeeded() async {
@@ -100,6 +115,19 @@ final class PetHomeViewModel {
         )
     }
 
+    func makePostDetailViewModel(momentID: UUID) -> PostDetailViewModel? {
+        guard let snapshot else { return nil }
+        return PostDetailViewModel(
+            momentID: momentID,
+            currentMember: snapshot.currentMember,
+            loadMomentDetailUseCase: loadMomentDetailUseCase,
+            addCommentUseCase: addCommentUseCase,
+            removeCommentUseCase: removeCommentUseCase,
+            reactToMomentUseCase: reactToMomentUseCase,
+            reactToCommentUseCase: reactToCommentUseCase
+        )
+    }
+
     private static func message(for error: Error) -> String {
         if let domainError = error as? DomainError {
             switch domainError {
@@ -107,6 +135,8 @@ final class PetHomeViewModel {
             case .memberNotFound: return "We couldn't find your profile in this Circle."
             case .petNotFound: return "Your pet is missing. Please try again."
             case .feedLocked: return "Post today's moment to unlock your friends' feed."
+            case .momentNotFound, .commentNotFound, .notCommentAuthor:
+                return "Something went wrong. Please try again."
             }
         }
         return "Something went wrong. Please try again."

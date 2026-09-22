@@ -104,6 +104,8 @@ final class PostComposerViewModel {
         case .captionTooLong: return "Captions must be 60 characters or fewer."
         case .captionEmpty: return "Please add a short caption."
         case .emptyPhotoData: return "That photo couldn't be processed. Please try another one."
+        case .commentTooLong, .commentEmpty, .invalidReactionEmoji:
+            return "Something went wrong. Please try again."
         }
     }
 }

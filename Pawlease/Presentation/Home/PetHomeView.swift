@@ -20,6 +20,11 @@ struct PetHomeView: View {
                     }
                 }
             }
+            .navigationDestination(for: UUID.self) { momentID in
+                if let postDetailViewModel = viewModel.makePostDetailViewModel(momentID: momentID) {
+                    PostDetailView(viewModel: postDetailViewModel)
+                }
+            }
     }
 
     private func handleComposerDismiss() {
