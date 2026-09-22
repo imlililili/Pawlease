@@ -94,6 +94,11 @@
 			path = PawleaseWidget;
 			sourceTree = "<group>";
 		};
+		22B869730063000100AA214D /* SharedKit */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = SharedKit;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -138,6 +143,7 @@
 				22B863073061722E00AA214D /* PawleaseTests */,
 				22B863113061722E00AA214D /* PawleaseUITests */,
 				22B869613062B51400AA214D /* PawleaseWidget */,
+				22B869730063000100AA214D /* SharedKit */,
 				22B8695C3062B51400AA214D /* Frameworks */,
 				22B862F33061722D00AA214D /* Products */,
 			);
@@ -182,6 +188,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				22B862F43061722D00AA214D /* Pawlease */,
+				22B869730063000100AA214D /* SharedKit */,
 			);
 			name = Pawlease;
 			packageProductDependencies = (
@@ -250,6 +257,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				22B869613062B51400AA214D /* PawleaseWidget */,
+				22B869730063000100AA214D /* SharedKit */,
 			);
 			name = PawleaseWidgetExtension;
 			packageProductDependencies = (

@@ -42,6 +42,7 @@ final class PetHomeViewModel {
     private let refreshSharedCircleUseCase: RefreshSharedCircleUseCase
     private let remoteChangeSignal: RemoteChangeSignaling
     private let cloudSyncEventSignal: CloudSyncEventSignaling
+    private let publishWidgetSnapshotUseCase: PublishWidgetSnapshotUseCase
     private let clock: ClockProviding
     /// Held only to forward to `CircleSettingsView` when constructed — this
     /// ViewModel never calls CloudKit APIs on it directly.
@@ -66,6 +67,7 @@ final class PetHomeViewModel {
         remoteChangeSignal: RemoteChangeSignaling,
         cloudSyncEventSignal: CloudSyncEventSignaling,
         cloudSharingControllerProvider: CloudSharingControllerProviding,
+        publishWidgetSnapshotUseCase: PublishWidgetSnapshotUseCase,
         clock: ClockProviding
     ) {
         self.loadPetHomeUseCase = loadPetHomeUseCase
@@ -86,6 +88,7 @@ final class PetHomeViewModel {
         self.remoteChangeSignal = remoteChangeSignal
         self.cloudSyncEventSignal = cloudSyncEventSignal
         self.cloudSharingControllerProvider = cloudSharingControllerProvider
+        self.publishWidgetSnapshotUseCase = publishWidgetSnapshotUseCase
         self.clock = clock
     }
 
@@ -122,6 +125,7 @@ final class PetHomeViewModel {
             _ = try await seedDemoCircleUseCase.execute()
             let snapshot = try await loadPetHomeUseCase.execute()
             self.snapshot = snapshot
+            await publishWidgetSnapshotUseCase.execute(from: snapshot)
 
             if snapshot.canViewTodayFeed {
                 do {

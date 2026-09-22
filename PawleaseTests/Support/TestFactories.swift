@@ -46,6 +46,39 @@ enum TestFactories {
         )
     }
 
+    static func petHomeSnapshot(
+        circleID: UUID = UUID(),
+        petName: String = "Mochi",
+        petSpeciesKey: String = "fox",
+        currentStreak: Int = 3,
+        contributorIDs: Set<UUID> = [UUID(), UUID()],
+        requiredContributorCount: Int = 2,
+        hasCurrentMemberPosted: Bool = true,
+        dayValue: String = "2026-03-15"
+    ) -> PetHomeSnapshot {
+        let ownerID = UUID()
+        let circle = FriendCircle(
+            id: circleID, name: "The Pack", timezoneIdentifier: "UTC", createdAt: Date(), ownerProfileID: ownerID
+        )
+        let member = TestFactories.member(circleID: circleID, profileID: ownerID)
+        let pet = SharedPet(
+            id: UUID(), circleID: circleID, name: petName, speciesKey: petSpeciesKey,
+            stage: .hatchling, growthPoints: 0, createdAt: Date()
+        )
+        let careStatus = DailyCareStatus(requiredContributorCount: requiredContributorCount, contributorIDs: contributorIDs)
+        return PetHomeSnapshot(
+            circle: circle,
+            currentMember: member,
+            pet: pet,
+            today: CircleDay(value: dayValue),
+            careStatus: careStatus,
+            activityState: careStatus.hasSurvived ? .thriving : .resting,
+            currentStreak: currentStreak,
+            hasCurrentMemberPosted: hasCurrentMemberPosted,
+            canViewTodayFeed: hasCurrentMemberPosted
+        )
+    }
+
     static func comment(
         id: UUID = UUID(),
         momentID: UUID = UUID(),
