@@ -7,12 +7,20 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2233495A3062EAC20081C815 /* PawleaseShareExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 223349503062EAC20081C815 /* PawleaseShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		22B8695E3062B51400AA214D /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 22B8695D3062B51400AA214D /* WidgetKit.framework */; };
 		22B869603062B51400AA214D /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 22B8695F3062B51400AA214D /* SwiftUI.framework */; };
 		22B8696B3062B51500AA214D /* PawleaseWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 22B8695B3062B51400AA214D /* PawleaseWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		223349583062EAC20081C815 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 22B862EA3061722D00AA214D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 2233494F3062EAC20081C815;
+			remoteInfo = PawleaseShareExtension;
+		};
 		22B863053061722E00AA214D /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 22B862EA3061722D00AA214D /* Project object */;
@@ -43,6 +51,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
+				2233495A3062EAC20081C815 /* PawleaseShareExtension.appex in Embed Foundation Extensions */,
 				22B8696B3062B51500AA214D /* PawleaseWidgetExtension.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
@@ -51,6 +60,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		223349503062EAC20081C815 /* PawleaseShareExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = PawleaseShareExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		22B862F23061722D00AA214D /* Pawlease.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Pawlease.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		22B863043061722E00AA214D /* PawleaseTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PawleaseTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		22B8630E3061722E00AA214D /* PawleaseUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PawleaseUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -61,6 +71,13 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		2233495E3062EAC20081C815 /* Exceptions for "PawleaseShareExtension" folder in "PawleaseShareExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 2233494F3062EAC20081C815 /* PawleaseShareExtension */;
+		};
 		22B8696C3062B51500AA214D /* Exceptions for "PawleaseWidget" folder in "PawleaseWidgetExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -78,6 +95,14 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		223349513062EAC20081C815 /* PawleaseShareExtension */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				2233495E3062EAC20081C815 /* Exceptions for "PawleaseShareExtension" folder in "PawleaseShareExtension" target */,
+			);
+			path = PawleaseShareExtension;
+			sourceTree = "<group>";
+		};
 		22B862F43061722D00AA214D /* Pawlease */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
@@ -112,6 +137,13 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		2233494D3062EAC20081C815 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		22B862EF3061722D00AA214D /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -154,6 +186,7 @@
 				22B863113061722E00AA214D /* PawleaseUITests */,
 				22B869613062B51400AA214D /* PawleaseWidget */,
 				22B869730063000100AA214D /* SharedKit */,
+				223349513062EAC20081C815 /* PawleaseShareExtension */,
 				22B8695C3062B51400AA214D /* Frameworks */,
 				22B862F33061722D00AA214D /* Products */,
 			);
@@ -166,6 +199,7 @@
 				22B863043061722E00AA214D /* PawleaseTests.xctest */,
 				22B8630E3061722E00AA214D /* PawleaseUITests.xctest */,
 				22B8695B3062B51400AA214D /* PawleaseWidgetExtension.appex */,
+				223349503062EAC20081C815 /* PawleaseShareExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -182,6 +216,28 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		2233494F3062EAC20081C815 /* PawleaseShareExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2233495B3062EAC20081C815 /* Build configuration list for PBXNativeTarget "PawleaseShareExtension" */;
+			buildPhases = (
+				2233494C3062EAC20081C815 /* Sources */,
+				2233494D3062EAC20081C815 /* Frameworks */,
+				2233494E3062EAC20081C815 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				223349513062EAC20081C815 /* PawleaseShareExtension */,
+			);
+			name = PawleaseShareExtension;
+			packageProductDependencies = (
+			);
+			productName = PawleaseShareExtension;
+			productReference = 223349503062EAC20081C815 /* PawleaseShareExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		22B862F13061722D00AA214D /* Pawlease */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 22B863183061722E00AA214D /* Build configuration list for PBXNativeTarget "Pawlease" */;
@@ -195,6 +251,7 @@
 			);
 			dependencies = (
 				22B8696A3062B51500AA214D /* PBXTargetDependency */,
+				223349593062EAC20081C815 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				22B862F43061722D00AA214D /* Pawlease */,
@@ -283,9 +340,12 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 2660;
+				LastSwiftUpdateCheck = 2700;
 				LastUpgradeCheck = 2660;
 				TargetAttributes = {
+					2233494F3062EAC20081C815 = {
+						CreatedOnToolsVersion = 27.0;
+					};
 					22B862F13061722D00AA214D = {
 						CreatedOnToolsVersion = 26.6;
 					};
@@ -320,11 +380,19 @@
 				22B863033061722E00AA214D /* PawleaseTests */,
 				22B8630D3061722E00AA214D /* PawleaseUITests */,
 				22B8695A3062B51400AA214D /* PawleaseWidgetExtension */,
+				2233494F3062EAC20081C815 /* PawleaseShareExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		2233494E3062EAC20081C815 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		22B862F03061722D00AA214D /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -356,6 +424,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		2233494C3062EAC20081C815 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		22B862EE3061722D00AA214D /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -387,6 +462,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		223349593062EAC20081C815 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 2233494F3062EAC20081C815 /* PawleaseShareExtension */;
+			targetProxy = 223349583062EAC20081C815 /* PBXContainerItemProxy */;
+		};
 		22B863063061722E00AA214D /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 22B862F13061722D00AA214D /* Pawlease */;
@@ -405,6 +485,64 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		2233495C3062EAC20081C815 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 4BZG6CR5HT;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = PawleaseShareExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = PawleaseShareExtension;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.lili.Pawlease.PawleaseShareExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		2233495D3062EAC20081C815 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 4BZG6CR5HT;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = PawleaseShareExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = PawleaseShareExtension;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.lili.Pawlease.PawleaseShareExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 		22B863163061722E00AA214D /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -745,6 +883,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		2233495B3062EAC20081C815 /* Build configuration list for PBXNativeTarget "PawleaseShareExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2233495C3062EAC20081C815 /* Debug */,
+				2233495D3062EAC20081C815 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		22B862ED3061722D00AA214D /* Build configuration list for PBXProject "Pawlease" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
