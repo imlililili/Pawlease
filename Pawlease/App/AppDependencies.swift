@@ -16,8 +16,16 @@ final class AppDependencies {
     let commentRepository: CommentRepository
     let momentReactionRepository: MomentReactionRepository
     let commentReactionRepository: CommentReactionRepository
+    let cloudAccountStatusProvider: CloudAccountStatusProviding
+    let circleSharingRepository: CircleSharingRepository
+    let remoteChangeSignal: RemoteChangeSignaling
+    let cloudSyncEventSignal: CloudSyncEventSignaling
 
     let photoProcessingService: PhotoProcessingService
+    /// Infrastructure-layer adapter for the native sharing sheet. Held here
+    /// (not on a ViewModel) and passed directly to the View that presents
+    /// it, since CloudKit/UIKit types must never reach a ViewModel.
+    let cloudSharingControllerProvider: CloudSharingControllerProviding
 
     let seedDemoCircleUseCase: SeedDemoCircleUseCase
     let loadPetHomeUseCase: LoadPetHomeUseCase
@@ -28,6 +36,12 @@ final class AppDependencies {
     let removeCommentUseCase: RemoveCommentUseCase
     let reactToMomentUseCase: ReactToMomentUseCase
     let reactToCommentUseCase: ReactToCommentUseCase
+    let checkCloudAccountUseCase: CheckCloudAccountUseCase
+    let prepareCircleInvitationUseCase: PrepareCircleInvitationUseCase
+    let acceptCircleInvitationUseCase: AcceptCircleInvitationUseCase
+    let loadCircleSharingStateUseCase: LoadCircleSharingStateUseCase
+    let refreshSharedCircleUseCase: RefreshSharedCircleUseCase
+    let loadCircleMembersUseCase: LoadCircleMembersUseCase
 
     init(
         persistenceController: PersistenceController,
@@ -55,6 +69,17 @@ final class AppDependencies {
         self.commentRepository = commentRepo
         self.momentReactionRepository = momentReactionRepo
         self.commentReactionRepository = commentReactionRepo
+
+        let cloudAccountStatus = CloudKitAccountStatusProvider()
+        let circleSharingRepo = CloudKitCircleSharingRepository(
+            container: container,
+            shareAcceptanceCoordinator: .shared
+        )
+        self.cloudAccountStatusProvider = cloudAccountStatus
+        self.circleSharingRepository = circleSharingRepo
+        self.remoteChangeSignal = CoreDataRemoteChangeSignal(container: container)
+        self.cloudSyncEventSignal = CoreDataCloudSyncEventSignal(container: container)
+        self.cloudSharingControllerProvider = CloudKitSharingControllerProvider(container: container)
 
         self.seedDemoCircleUseCase = SeedDemoCircleUseCase(
             circleRepository: circleRepo,
@@ -95,6 +120,23 @@ final class AppDependencies {
             commentReactionRepository: commentReactionRepo,
             clock: clock
         )
+        self.checkCloudAccountUseCase = CheckCloudAccountUseCase(
+            cloudAccountStatusProvider: cloudAccountStatus
+        )
+        self.prepareCircleInvitationUseCase = PrepareCircleInvitationUseCase(
+            cloudAccountStatusProvider: cloudAccountStatus,
+            circleSharingRepository: circleSharingRepo
+        )
+        self.acceptCircleInvitationUseCase = AcceptCircleInvitationUseCase(
+            circleSharingRepository: circleSharingRepo
+        )
+        self.loadCircleSharingStateUseCase = LoadCircleSharingStateUseCase(
+            circleSharingRepository: circleSharingRepo
+        )
+        self.refreshSharedCircleUseCase = RefreshSharedCircleUseCase(
+            loadPetHomeUseCase: self.loadPetHomeUseCase
+        )
+        self.loadCircleMembersUseCase = LoadCircleMembersUseCase(memberRepository: memberRepo)
     }
 
     static func live() -> AppDependencies {

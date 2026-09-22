@@ -16,7 +16,16 @@ struct RootView: View {
                     addCommentUseCase: dependencies.addCommentUseCase,
                     removeCommentUseCase: dependencies.removeCommentUseCase,
                     reactToMomentUseCase: dependencies.reactToMomentUseCase,
-                    reactToCommentUseCase: dependencies.reactToCommentUseCase
+                    reactToCommentUseCase: dependencies.reactToCommentUseCase,
+                    loadCircleMembersUseCase: dependencies.loadCircleMembersUseCase,
+                    checkCloudAccountUseCase: dependencies.checkCloudAccountUseCase,
+                    loadCircleSharingStateUseCase: dependencies.loadCircleSharingStateUseCase,
+                    prepareCircleInvitationUseCase: dependencies.prepareCircleInvitationUseCase,
+                    refreshSharedCircleUseCase: dependencies.refreshSharedCircleUseCase,
+                    remoteChangeSignal: dependencies.remoteChangeSignal,
+                    cloudSyncEventSignal: dependencies.cloudSyncEventSignal,
+                    cloudSharingControllerProvider: dependencies.cloudSharingControllerProvider,
+                    clock: dependencies.clock
                 )
             )
         }
