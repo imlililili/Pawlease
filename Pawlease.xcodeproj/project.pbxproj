@@ -68,11 +68,21 @@
 			);
 			target = 22B8695A3062B51400AA214D /* PawleaseWidgetExtension */;
 		};
+		22B869740063000100AA214D /* Exceptions for "Pawlease" folder in "Pawlease" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Resources/Info.plist,
+			);
+			target = 22B862F13061722D00AA214D /* Pawlease */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		22B862F43061722D00AA214D /* Pawlease */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				22B869740063000100AA214D /* Exceptions for "Pawlease" folder in "Pawlease" target */,
+			);
 			path = Pawlease;
 			sourceTree = "<group>";
 		};
@@ -525,6 +535,7 @@
 				DEVELOPMENT_TEAM = 4BZG6CR5HT;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Pawlease/Resources/Info.plist;
 				INFOPLIST_KEY_CKSharingSupported = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -559,6 +570,7 @@
 				DEVELOPMENT_TEAM = 4BZG6CR5HT;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Pawlease/Resources/Info.plist;
 				INFOPLIST_KEY_CKSharingSupported = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;

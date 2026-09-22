@@ -21,7 +21,17 @@ struct PawleaseApp: App {
                         Task { await acceptPendingInvitationIfNeeded() }
                     }
                 }
+                .onOpenURL(perform: handleOpenURL)
         }
+    }
+
+    /// Minimum safe handling for the widget's tap target
+    /// (`pawlease://home`): validate the scheme and ignore anything else.
+    /// Pet Home is already `RootView`'s root, so there is no further
+    /// routing to do — this exists to accept the URL without crashing
+    /// rather than to build out unrelated deep-link navigation.
+    private func handleOpenURL(_ url: URL) {
+        guard url.scheme == "pawlease" else { return }
     }
 
     /// The application lifecycle (foregrounding after
