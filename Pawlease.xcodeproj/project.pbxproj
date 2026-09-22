@@ -6,6 +6,12 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		22B8695E3062B51400AA214D /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 22B8695D3062B51400AA214D /* WidgetKit.framework */; };
+		22B869603062B51400AA214D /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 22B8695F3062B51400AA214D /* SwiftUI.framework */; };
+		22B8696B3062B51500AA214D /* PawleaseWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 22B8695B3062B51400AA214D /* PawleaseWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		22B863053061722E00AA214D /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -21,13 +27,47 @@
 			remoteGlobalIDString = 22B862F13061722D00AA214D;
 			remoteInfo = Pawlease;
 		};
+		22B869693062B51500AA214D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 22B862EA3061722D00AA214D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 22B8695A3062B51400AA214D;
+			remoteInfo = PawleaseWidgetExtension;
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		22B869703062B51500AA214D /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				22B8696B3062B51500AA214D /* PawleaseWidgetExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		22B862F23061722D00AA214D /* Pawlease.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Pawlease.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		22B863043061722E00AA214D /* PawleaseTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PawleaseTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		22B8630E3061722E00AA214D /* PawleaseUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PawleaseUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		22B8695B3062B51400AA214D /* PawleaseWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = PawleaseWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		22B8695D3062B51400AA214D /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		22B8695F3062B51400AA214D /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		22B8696C3062B51500AA214D /* Exceptions for "PawleaseWidget" folder in "PawleaseWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 22B8695A3062B51400AA214D /* PawleaseWidgetExtension */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		22B862F43061722D00AA214D /* Pawlease */ = {
@@ -43,6 +83,14 @@
 		22B863113061722E00AA214D /* PawleaseUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = PawleaseUITests;
+			sourceTree = "<group>";
+		};
+		22B869613062B51400AA214D /* PawleaseWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				22B8696C3062B51500AA214D /* Exceptions for "PawleaseWidget" folder in "PawleaseWidgetExtension" target */,
+			);
+			path = PawleaseWidget;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -69,6 +117,15 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		22B869583062B51400AA214D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				22B869603062B51400AA214D /* SwiftUI.framework in Frameworks */,
+				22B8695E3062B51400AA214D /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -78,6 +135,8 @@
 				22B862F43061722D00AA214D /* Pawlease */,
 				22B863073061722E00AA214D /* PawleaseTests */,
 				22B863113061722E00AA214D /* PawleaseUITests */,
+				22B869613062B51400AA214D /* PawleaseWidget */,
+				22B8695C3062B51400AA214D /* Frameworks */,
 				22B862F33061722D00AA214D /* Products */,
 			);
 			sourceTree = "<group>";
@@ -88,8 +147,18 @@
 				22B862F23061722D00AA214D /* Pawlease.app */,
 				22B863043061722E00AA214D /* PawleaseTests.xctest */,
 				22B8630E3061722E00AA214D /* PawleaseUITests.xctest */,
+				22B8695B3062B51400AA214D /* PawleaseWidgetExtension.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		22B8695C3062B51400AA214D /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				22B8695D3062B51400AA214D /* WidgetKit.framework */,
+				22B8695F3062B51400AA214D /* SwiftUI.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -102,10 +171,12 @@
 				22B862EE3061722D00AA214D /* Sources */,
 				22B862EF3061722D00AA214D /* Frameworks */,
 				22B862F03061722D00AA214D /* Resources */,
+				22B869703062B51500AA214D /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				22B8696A3062B51500AA214D /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				22B862F43061722D00AA214D /* Pawlease */,
@@ -163,6 +234,28 @@
 			productReference = 22B8630E3061722E00AA214D /* PawleaseUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		22B8695A3062B51400AA214D /* PawleaseWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 22B8696D3062B51500AA214D /* Build configuration list for PBXNativeTarget "PawleaseWidgetExtension" */;
+			buildPhases = (
+				22B869573062B51400AA214D /* Sources */,
+				22B869583062B51400AA214D /* Frameworks */,
+				22B869593062B51400AA214D /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				22B869613062B51400AA214D /* PawleaseWidget */,
+			);
+			name = PawleaseWidgetExtension;
+			packageProductDependencies = (
+			);
+			productName = PawleaseWidgetExtension;
+			productReference = 22B8695B3062B51400AA214D /* PawleaseWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -184,6 +277,9 @@
 						CreatedOnToolsVersion = 26.6;
 						TestTargetID = 22B862F13061722D00AA214D;
 					};
+					22B8695A3062B51400AA214D = {
+						CreatedOnToolsVersion = 26.6;
+					};
 				};
 			};
 			buildConfigurationList = 22B862ED3061722D00AA214D /* Build configuration list for PBXProject "Pawlease" */;
@@ -203,6 +299,7 @@
 				22B862F13061722D00AA214D /* Pawlease */,
 				22B863033061722E00AA214D /* PawleaseTests */,
 				22B8630D3061722E00AA214D /* PawleaseUITests */,
+				22B8695A3062B51400AA214D /* PawleaseWidgetExtension */,
 			);
 		};
 /* End PBXProject section */
@@ -223,6 +320,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		22B8630C3061722E00AA214D /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		22B869593062B51400AA214D /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -253,6 +357,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		22B869573062B51400AA214D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -265,6 +376,11 @@
 			isa = PBXTargetDependency;
 			target = 22B862F13061722D00AA214D /* Pawlease */;
 			targetProxy = 22B8630F3061722E00AA214D /* PBXContainerItemProxy */;
+		};
+		22B8696A3062B51500AA214D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 22B8695A3062B51400AA214D /* PawleaseWidgetExtension */;
+			targetProxy = 22B869693062B51500AA214D /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -462,6 +578,7 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 4BZG6CR5HT;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				MARKETING_VERSION = 1.0;
@@ -483,6 +600,7 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 4BZG6CR5HT;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				MARKETING_VERSION = 1.0;
@@ -503,6 +621,7 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 4BZG6CR5HT;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.lili.PawleaseUITests;
@@ -522,6 +641,7 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 4BZG6CR5HT;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.lili.PawleaseUITests;
@@ -533,6 +653,68 @@
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_TARGET_NAME = Pawlease;
+			};
+			name = Release;
+		};
+		22B8696E3062B51500AA214D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 4BZG6CR5HT;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = PawleaseWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = PawleaseWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.lili.Pawlease.PawleaseWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		22B8696F3062B51500AA214D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 4BZG6CR5HT;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = PawleaseWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = PawleaseWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.lili.Pawlease.PawleaseWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
 		};
@@ -571,6 +753,15 @@
 			buildConfigurations = (
 				22B8631F3061722E00AA214D /* Debug */,
 				22B863203061722E00AA214D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		22B8696D3062B51500AA214D /* Build configuration list for PBXNativeTarget "PawleaseWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				22B8696E3062B51500AA214D /* Debug */,
+				22B8696F3062B51500AA214D /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
