@@ -8,6 +8,17 @@ nonisolated final class CoreDataMomentRepository: MomentRepository, @unchecked S
         self.container = container
     }
 
+    func fetchMoment(id: UUID) async throws -> DailyMoment? {
+        let context = container.newBackgroundContext()
+        return try await context.perform {
+            let request = DailyPostEntity.fetchRequest()
+            request.predicate = NSPredicate(format: "id == %@", id as CVarArg)
+            request.fetchLimit = 1
+            guard let entity = try context.fetch(request).first else { return nil }
+            return try MomentMapper.toDomain(entity)
+        }
+    }
+
     func fetchMoments(circleID: UUID, day: CircleDay) async throws -> [DailyMoment] {
         try await fetchMoments(circleID: circleID, dayValues: [day.value])
     }

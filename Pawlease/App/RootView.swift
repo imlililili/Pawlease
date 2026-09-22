@@ -11,7 +11,12 @@ struct RootView: View {
                     loadTodayMomentsUseCase: dependencies.loadTodayMomentsUseCase,
                     seedDemoCircleUseCase: dependencies.seedDemoCircleUseCase,
                     publishDailyMomentUseCase: dependencies.publishDailyMomentUseCase,
-                    photoProcessingService: dependencies.photoProcessingService
+                    photoProcessingService: dependencies.photoProcessingService,
+                    loadMomentDetailUseCase: dependencies.loadMomentDetailUseCase,
+                    addCommentUseCase: dependencies.addCommentUseCase,
+                    removeCommentUseCase: dependencies.removeCommentUseCase,
+                    reactToMomentUseCase: dependencies.reactToMomentUseCase,
+                    reactToCommentUseCase: dependencies.reactToCommentUseCase
                 )
             )
         }

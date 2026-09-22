@@ -16,7 +16,9 @@ final class PawleaseUITests: XCTestCase {
     /// Drives the real Phase 1 golden path: the seeded Circle appears on
     /// launch, "Take Today's Photo" opens the Composer, Publish stays
     /// disabled until a photo and caption are provided, and Cancel returns
-    /// to an unchanged Pet Home.
+    /// to an unchanged Pet Home. Also confirms the comments/reactions
+    /// feature's navigation change (feed rows now link to Post Detail)
+    /// didn't disturb this existing flow.
     @MainActor
     func testPetHomeShowsSeededCircleAndComposerGatesPublish() throws {
         let app = XCUIApplication()

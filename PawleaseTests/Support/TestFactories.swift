@@ -27,4 +27,42 @@ enum TestFactories {
         calendar.timeZone = TimeZone(identifier: timeZoneIdentifier) ?? TimeZone(identifier: "UTC")!
         return calendar.date(from: DateComponents(year: year, month: month, day: day, hour: hour))!
     }
+
+    static func member(
+        id: UUID = UUID(),
+        circleID: UUID = UUID(),
+        profileID: UUID = UUID(),
+        displayName: String = "Ava",
+        role: CircleMemberRole = .member
+    ) -> CircleMember {
+        CircleMember(
+            id: id,
+            circleID: circleID,
+            profileID: profileID,
+            displayName: displayName,
+            avatarEmoji: "🐼",
+            joinedAt: Date(),
+            role: role
+        )
+    }
+
+    static func comment(
+        id: UUID = UUID(),
+        momentID: UUID = UUID(),
+        authorID: UUID = UUID(),
+        authorName: String = "Test Member",
+        body: String = "Nice one!",
+        createdAt: Date = Date(),
+        isRemoved: Bool = false
+    ) throws -> MomentComment {
+        MomentComment(
+            id: id,
+            momentID: momentID,
+            authorProfileID: authorID,
+            authorNameSnapshot: authorName,
+            body: try CommentBody(body),
+            createdAt: createdAt,
+            isRemoved: isRemoved
+        )
+    }
 }

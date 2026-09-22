@@ -6,6 +6,9 @@ enum DomainValidationError: Error, Equatable, Sendable {
     case captionTooLong
     case captionEmpty
     case emptyPhotoData
+    case commentTooLong
+    case commentEmpty
+    case invalidReactionEmoji
 }
 
 /// Failures surfaced while orchestrating Use Cases. These represent Circle
@@ -15,4 +18,7 @@ enum DomainError: Error, Equatable, Sendable {
     case memberNotFound
     case petNotFound
     case feedLocked
+    case momentNotFound
+    case commentNotFound
+    case notCommentAuthor
 }

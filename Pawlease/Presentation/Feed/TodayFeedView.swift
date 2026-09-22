@@ -9,7 +9,10 @@ struct TodayFeedView: View {
                 .font(.headline)
 
             ForEach(moments) { moment in
-                MomentRow(moment: moment)
+                NavigationLink(value: moment.id) {
+                    MomentRow(moment: moment)
+                }
+                .buttonStyle(.plain)
             }
         }
     }

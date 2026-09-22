@@ -44,6 +44,10 @@ final class InMemoryPetRepository: PetRepository, @unchecked Sendable {
 final class InMemoryMomentRepository: MomentRepository, @unchecked Sendable {
     var moments: [DailyMoment] = []
 
+    func fetchMoment(id: UUID) async throws -> DailyMoment? {
+        moments.first { $0.id == id }
+    }
+
     func fetchMoments(circleID: UUID, day: CircleDay) async throws -> [DailyMoment] {
         moments.filter { $0.circleID == circleID && $0.day == day }
     }
