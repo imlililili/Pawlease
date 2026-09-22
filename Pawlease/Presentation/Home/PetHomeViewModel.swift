@@ -18,6 +18,7 @@ final class PetHomeViewModel {
     private(set) var snapshot: PetHomeSnapshot?
     private(set) var todayMoments: [DailyMoment] = []
     private(set) var feedError: String?
+    private(set) var syncStatus: CircleSyncStatus = .localChangesSaved
     var isComposerPresented = false
 
     var viewState: PetHomeViewState? {
@@ -34,6 +35,17 @@ final class PetHomeViewModel {
     private let removeCommentUseCase: RemoveCommentUseCase
     private let reactToMomentUseCase: ReactToMomentUseCase
     private let reactToCommentUseCase: ReactToCommentUseCase
+    private let loadCircleMembersUseCase: LoadCircleMembersUseCase
+    private let checkCloudAccountUseCase: CheckCloudAccountUseCase
+    private let loadCircleSharingStateUseCase: LoadCircleSharingStateUseCase
+    private let prepareCircleInvitationUseCase: PrepareCircleInvitationUseCase
+    private let refreshSharedCircleUseCase: RefreshSharedCircleUseCase
+    private let remoteChangeSignal: RemoteChangeSignaling
+    private let cloudSyncEventSignal: CloudSyncEventSignaling
+    private let clock: ClockProviding
+    /// Held only to forward to `CircleSettingsView` when constructed — this
+    /// ViewModel never calls CloudKit APIs on it directly.
+    let cloudSharingControllerProvider: CloudSharingControllerProviding
 
     init(
         loadPetHomeUseCase: LoadPetHomeUseCase,
@@ -45,7 +57,16 @@ final class PetHomeViewModel {
         addCommentUseCase: AddCommentUseCase,
         removeCommentUseCase: RemoveCommentUseCase,
         reactToMomentUseCase: ReactToMomentUseCase,
-        reactToCommentUseCase: ReactToCommentUseCase
+        reactToCommentUseCase: ReactToCommentUseCase,
+        loadCircleMembersUseCase: LoadCircleMembersUseCase,
+        checkCloudAccountUseCase: CheckCloudAccountUseCase,
+        loadCircleSharingStateUseCase: LoadCircleSharingStateUseCase,
+        prepareCircleInvitationUseCase: PrepareCircleInvitationUseCase,
+        refreshSharedCircleUseCase: RefreshSharedCircleUseCase,
+        remoteChangeSignal: RemoteChangeSignaling,
+        cloudSyncEventSignal: CloudSyncEventSignaling,
+        cloudSharingControllerProvider: CloudSharingControllerProviding,
+        clock: ClockProviding
     ) {
         self.loadPetHomeUseCase = loadPetHomeUseCase
         self.loadTodayMomentsUseCase = loadTodayMomentsUseCase
@@ -57,6 +78,37 @@ final class PetHomeViewModel {
         self.removeCommentUseCase = removeCommentUseCase
         self.reactToMomentUseCase = reactToMomentUseCase
         self.reactToCommentUseCase = reactToCommentUseCase
+        self.loadCircleMembersUseCase = loadCircleMembersUseCase
+        self.checkCloudAccountUseCase = checkCloudAccountUseCase
+        self.loadCircleSharingStateUseCase = loadCircleSharingStateUseCase
+        self.prepareCircleInvitationUseCase = prepareCircleInvitationUseCase
+        self.refreshSharedCircleUseCase = refreshSharedCircleUseCase
+        self.remoteChangeSignal = remoteChangeSignal
+        self.cloudSyncEventSignal = cloudSyncEventSignal
+        self.cloudSharingControllerProvider = cloudSharingControllerProvider
+        self.clock = clock
+    }
+
+    /// Observes CloudKit sync evidence and remote-change pulses for the
+    /// lifetime of the view. Never polls — purely reactive to platform
+    /// notifications. Intended to run as a long-lived `.task`.
+    func observeCloudSync() async {
+        async let syncTask: Void = observeSyncEvents()
+        async let remoteChangeTask: Void = observeRemoteChanges()
+        _ = await (syncTask, remoteChangeTask)
+    }
+
+    private func observeSyncEvents() async {
+        for await status in cloudSyncEventSignal.syncEvents() {
+            syncStatus = status
+        }
+    }
+
+    private func observeRemoteChanges() async {
+        for await _ in remoteChangeSignal.remoteChanges() {
+            _ = try? await refreshSharedCircleUseCase.execute()
+            await refresh()
+        }
     }
 
     func loadIfNeeded() async {
@@ -125,6 +177,17 @@ final class PetHomeViewModel {
             removeCommentUseCase: removeCommentUseCase,
             reactToMomentUseCase: reactToMomentUseCase,
             reactToCommentUseCase: reactToCommentUseCase
+        )
+    }
+
+    func makeCircleSettingsViewModel() -> CircleSettingsViewModel {
+        CircleSettingsViewModel(
+            loadPetHomeUseCase: loadPetHomeUseCase,
+            loadCircleMembersUseCase: loadCircleMembersUseCase,
+            checkCloudAccountUseCase: checkCloudAccountUseCase,
+            loadCircleSharingStateUseCase: loadCircleSharingStateUseCase,
+            prepareCircleInvitationUseCase: prepareCircleInvitationUseCase,
+            clock: clock
         )
     }
 
