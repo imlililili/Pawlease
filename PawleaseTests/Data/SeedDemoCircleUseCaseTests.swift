@@ -4,7 +4,7 @@ import Foundation
 
 struct SeedDemoCircleUseCaseTests {
     @Test func seedsOneCircleWithThreeMembersAndOnePetIdempotently() async throws {
-        let persistence = PersistenceController(inMemory: true)
+        let persistence = PersistenceController(mode: .inMemory)
         let container = persistence.container
         let useCase = SeedDemoCircleUseCase(
             circleRepository: CoreDataCircleRepository(container: container),

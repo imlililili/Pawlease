@@ -9,7 +9,7 @@ import Foundation
 struct CoreDataCommentAndReactionRepositoryTests {
     @Test
     func inMemoryStoreSavesFetchesAndSoftDeletesAComment() async throws {
-        let persistence = PersistenceController(inMemory: true)
+        let persistence = PersistenceController(mode: .inMemory)
         let circleRepo = CoreDataCircleRepository(container: persistence.container)
         let momentRepo = CoreDataMomentRepository(container: persistence.container)
         let commentRepo = CoreDataCommentRepository(container: persistence.container)
@@ -46,7 +46,7 @@ struct CoreDataCommentAndReactionRepositoryTests {
 
     @Test
     func inMemoryStoreEnforcesOneMomentReactionPerMember() async throws {
-        let persistence = PersistenceController(inMemory: true)
+        let persistence = PersistenceController(mode: .inMemory)
         let circleRepo = CoreDataCircleRepository(container: persistence.container)
         let momentRepo = CoreDataMomentRepository(container: persistence.container)
         let reactionRepo = CoreDataMomentReactionRepository(container: persistence.container)
