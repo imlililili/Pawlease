@@ -21,4 +21,8 @@ enum DomainError: Error, Equatable, Sendable {
     case momentNotFound
     case commentNotFound
     case notCommentAuthor
+    /// A `PendingPostDraftEntity` row is missing required fields (id,
+    /// image path, or source) — the record can't be represented as a
+    /// `PendingPostDraft`.
+    case pendingDraftCorrupted
 }

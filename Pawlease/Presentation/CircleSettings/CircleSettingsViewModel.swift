@@ -141,7 +141,7 @@ final class CircleSettingsViewModel {
             case .circleNotFound: return "We couldn't find your Circle."
             case .memberNotFound: return "We couldn't find your profile in this Circle."
             case .petNotFound: return "Your pet is missing. Please try again."
-            case .feedLocked, .momentNotFound, .commentNotFound, .notCommentAuthor:
+            case .feedLocked, .momentNotFound, .commentNotFound, .notCommentAuthor, .pendingDraftCorrupted:
                 return "Something went wrong. Please try again."
             }
         }
