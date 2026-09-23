@@ -153,10 +153,46 @@ final class CircleSettingsViewModel {
             let details = try await createCircleInviteCodeUseCase.execute(circleID: circleID)
             currentInviteCode = details.code
             inviteCodeState = .active(Self.display(for: details, now: clock.now))
+        } catch let error as CircleSharingError {
+            // `CreateCircleInviteCodeUseCase` delegates CKShare preparation
+            // to `PrepareCircleInvitationUseCase`, which throws
+            // `CircleSharingError` (not `CircleInviteCodeError`) for an
+            // unavailable iCloud account — this must be caught explicitly,
+            // or it falls through to the generic message below and the
+            // account state (already shown correctly elsewhere on this
+            // screen) never explains *why* invite-code creation failed.
+            inviteCodeState = .error(Self.inviteCodeErrorMessage(for: error))
         } catch let error as CircleInviteCodeError {
             inviteCodeState = .error(error.displayMessage)
         } catch {
             inviteCodeState = .error("We couldn't create an invite code. Please try again.")
+        }
+    }
+
+    /// Maps a `CircleSharingError` into an invite-code-specific, actionable
+    /// message. Transient failures (network/rate-limit/service-unavailable)
+    /// keep `CircleSharingError.displayMessage`'s existing "try again"
+    /// framing unchanged — retrying is still the right next step for those.
+    /// Account-unavailable failures get a message specific to *why* the
+    /// account can't be used right now, so the user knows what to actually
+    /// go do about it.
+    private static func inviteCodeErrorMessage(for error: CircleSharingError) -> String {
+        guard case .iCloudAccountUnavailable(let availability) = error else {
+            return error.displayMessage
+        }
+        switch availability {
+        case .noAccount:
+            return "Sign in to iCloud in Settings to create an invite code."
+        case .restricted:
+            return "iCloud is restricted on this device, so you can't create an invite code right now."
+        case .unknown:
+            return "We couldn't check your iCloud status. Please try again."
+        case .temporarilyUnavailable:
+            return "iCloud is temporarily unavailable. Please try again shortly."
+        case .available:
+            // Unreachable: `.iCloudAccountUnavailable` is only ever thrown
+            // when `allowsSharing` is false, which excludes `.available`.
+            return error.displayMessage
         }
     }
 
