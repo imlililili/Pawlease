@@ -7,10 +7,18 @@
 		<key>NSExtensionAttributes</key>
 		<dict>
 			<key>NSExtensionActivationRule</key>
-			<string>TRUEPREDICATE</string>
+			<dict>
+				<!-- Production, image-only activation rule: the extension
+				     appears only when exactly one image is shared. Omitting
+				     every other NSExtensionActivationSupports* key defaults
+				     them to 0, so video-only, URL-only, text-only, and
+				     multiple-image shares never trigger it. -->
+				<key>NSExtensionActivationSupportsImageWithMaxCount</key>
+				<integer>1</integer>
+			</dict>
 		</dict>
-		<key>NSExtensionMainStoryboard</key>
-		<string>MainInterface</string>
+		<key>NSExtensionPrincipalClass</key>
+		<string>$(PRODUCT_MODULE_NAME).ShareViewController</string>
 		<key>NSExtensionPointIdentifier</key>
 		<string>com.apple.share-services</string>
 	</dict>
