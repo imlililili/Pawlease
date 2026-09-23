@@ -25,6 +25,7 @@ struct RootView: View {
                     remoteChangeSignal: dependencies.remoteChangeSignal,
                     cloudSyncEventSignal: dependencies.cloudSyncEventSignal,
                     cloudSharingControllerProvider: dependencies.cloudSharingControllerProvider,
+                    publishWidgetSnapshotUseCase: dependencies.publishWidgetSnapshotUseCase,
                     clock: dependencies.clock
                 )
             )

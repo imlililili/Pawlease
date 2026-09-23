@@ -20,6 +20,8 @@ final class AppDependencies {
     let circleSharingRepository: CircleSharingRepository
     let remoteChangeSignal: RemoteChangeSignaling
     let cloudSyncEventSignal: CloudSyncEventSignaling
+    let widgetSnapshotStore: WidgetSnapshotStoring
+    let widgetTimelineReloader: WidgetTimelineReloading
 
     let photoProcessingService: PhotoProcessingService
     /// Infrastructure-layer adapter for the native sharing sheet. Held here
@@ -42,6 +44,7 @@ final class AppDependencies {
     let loadCircleSharingStateUseCase: LoadCircleSharingStateUseCase
     let refreshSharedCircleUseCase: RefreshSharedCircleUseCase
     let loadCircleMembersUseCase: LoadCircleMembersUseCase
+    let publishWidgetSnapshotUseCase: PublishWidgetSnapshotUseCase
 
     init(
         persistenceController: PersistenceController,
@@ -80,6 +83,8 @@ final class AppDependencies {
         self.remoteChangeSignal = CoreDataRemoteChangeSignal(container: container)
         self.cloudSyncEventSignal = CoreDataCloudSyncEventSignal(container: container)
         self.cloudSharingControllerProvider = CloudKitSharingControllerProvider(container: container)
+        self.widgetSnapshotStore = AppGroupWidgetSnapshotStore()
+        self.widgetTimelineReloader = WidgetKitTimelineReloader()
 
         self.seedDemoCircleUseCase = SeedDemoCircleUseCase(
             circleRepository: circleRepo,
@@ -137,6 +142,11 @@ final class AppDependencies {
             loadPetHomeUseCase: self.loadPetHomeUseCase
         )
         self.loadCircleMembersUseCase = LoadCircleMembersUseCase(memberRepository: memberRepo)
+        self.publishWidgetSnapshotUseCase = PublishWidgetSnapshotUseCase(
+            widgetSnapshotStore: self.widgetSnapshotStore,
+            widgetTimelineReloader: self.widgetTimelineReloader,
+            clock: clock
+        )
     }
 
     static func live() -> AppDependencies {
