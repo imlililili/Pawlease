@@ -230,6 +230,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				223349513062EAC20081C815 /* PawleaseShareExtension */,
+				22B869730063000100AA214D /* SharedKit */,
 			);
 			name = PawleaseShareExtension;
 			packageProductDependencies = (
