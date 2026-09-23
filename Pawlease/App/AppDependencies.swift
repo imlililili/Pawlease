@@ -22,6 +22,8 @@ final class AppDependencies {
     let cloudSyncEventSignal: CloudSyncEventSignaling
     let widgetSnapshotStore: WidgetSnapshotStoring
     let widgetTimelineReloader: WidgetTimelineReloading
+    let pendingPostDraftRepository: PendingPostDraftRepository
+    let shareInboxStore: ShareInboxStoring
 
     let photoProcessingService: PhotoProcessingService
     /// Infrastructure-layer adapter for the native sharing sheet. Held here
@@ -45,6 +47,10 @@ final class AppDependencies {
     let refreshSharedCircleUseCase: RefreshSharedCircleUseCase
     let loadCircleMembersUseCase: LoadCircleMembersUseCase
     let publishWidgetSnapshotUseCase: PublishWidgetSnapshotUseCase
+    let importPendingSharesUseCase: ImportPendingSharesUseCase
+    let loadPendingDraftsUseCase: LoadPendingDraftsUseCase
+    let loadPendingDraftImageUseCase: LoadPendingDraftImageUseCase
+    let consumePendingDraftUseCase: ConsumePendingDraftUseCase
 
     init(
         persistenceController: PersistenceController,
@@ -85,6 +91,9 @@ final class AppDependencies {
         self.cloudSharingControllerProvider = CloudKitSharingControllerProvider(container: container)
         self.widgetSnapshotStore = AppGroupWidgetSnapshotStore()
         self.widgetTimelineReloader = WidgetKitTimelineReloader()
+        let pendingDraftRepo = CoreDataPendingPostDraftRepository(container: container)
+        self.pendingPostDraftRepository = pendingDraftRepo
+        self.shareInboxStore = AppGroupShareInboxStore()
 
         self.seedDemoCircleUseCase = SeedDemoCircleUseCase(
             circleRepository: circleRepo,
@@ -146,6 +155,16 @@ final class AppDependencies {
             widgetSnapshotStore: self.widgetSnapshotStore,
             widgetTimelineReloader: self.widgetTimelineReloader,
             clock: clock
+        )
+        self.importPendingSharesUseCase = ImportPendingSharesUseCase(
+            shareInboxStore: self.shareInboxStore,
+            pendingPostDraftRepository: pendingDraftRepo
+        )
+        self.loadPendingDraftsUseCase = LoadPendingDraftsUseCase(pendingPostDraftRepository: pendingDraftRepo)
+        self.loadPendingDraftImageUseCase = LoadPendingDraftImageUseCase(shareInboxStore: self.shareInboxStore)
+        self.consumePendingDraftUseCase = ConsumePendingDraftUseCase(
+            pendingPostDraftRepository: pendingDraftRepo,
+            shareInboxStore: self.shareInboxStore
         )
     }
 

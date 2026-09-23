@@ -44,21 +44,46 @@ final class PostComposerViewModel {
         rawImageData != nil && viewState.isCaptionValid && publishState != .publishing
     }
 
+    /// Set only when this composer was opened from a shared-photo banner
+    /// (see `PetHomeViewModel.makeComposerViewModel(forPendingDraft:)`).
+    /// `nil` for the normal "Take Today's Photo" flow.
+    private let pendingDraftID: UUID?
+    private let pendingDraftImageFilename: String?
+
     private let circle: FriendCircle
     private let member: CircleMember
     private let publishDailyMomentUseCase: PublishDailyMomentUseCase
     private let photoProcessingService: PhotoProcessingService
+    private let consumePendingDraftUseCase: ConsumePendingDraftUseCase?
 
     init(
         circle: FriendCircle,
         member: CircleMember,
         publishDailyMomentUseCase: PublishDailyMomentUseCase,
-        photoProcessingService: PhotoProcessingService
+        photoProcessingService: PhotoProcessingService,
+        prefilledImageData: Data? = nil,
+        prefilledCaption: String? = nil,
+        pendingDraftID: UUID? = nil,
+        pendingDraftImageFilename: String? = nil,
+        consumePendingDraftUseCase: ConsumePendingDraftUseCase? = nil
     ) {
         self.circle = circle
         self.member = member
         self.publishDailyMomentUseCase = publishDailyMomentUseCase
         self.photoProcessingService = photoProcessingService
+        self.pendingDraftID = pendingDraftID
+        self.pendingDraftImageFilename = pendingDraftImageFilename
+        self.consumePendingDraftUseCase = consumePendingDraftUseCase
+
+        if let prefilledImageData {
+            self.rawImageData = prefilledImageData
+            if let uiImage = UIImage(data: prefilledImageData) {
+                self.previewImage = Image(uiImage: uiImage)
+            }
+        }
+        if let prefilledCaption {
+            self.captionText = String(prefilledCaption.prefix(characterLimit))
+        }
     }
 
     private func loadSelectedPhoto() async {
@@ -92,6 +117,10 @@ final class PostComposerViewModel {
             )
             didPublish = true
             publishState = .idle
+
+            if let pendingDraftID, let pendingDraftImageFilename {
+                await consumePendingDraftUseCase?.execute(draftID: pendingDraftID, imageFilename: pendingDraftImageFilename)
+            }
         } catch let error as DomainValidationError {
             publishState = .error(Self.message(for: error))
         } catch {
