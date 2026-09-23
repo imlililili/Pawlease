@@ -26,6 +26,10 @@ struct RootView: View {
                     cloudSyncEventSignal: dependencies.cloudSyncEventSignal,
                     cloudSharingControllerProvider: dependencies.cloudSharingControllerProvider,
                     publishWidgetSnapshotUseCase: dependencies.publishWidgetSnapshotUseCase,
+                    importPendingSharesUseCase: dependencies.importPendingSharesUseCase,
+                    loadPendingDraftsUseCase: dependencies.loadPendingDraftsUseCase,
+                    loadPendingDraftImageUseCase: dependencies.loadPendingDraftImageUseCase,
+                    consumePendingDraftUseCase: dependencies.consumePendingDraftUseCase,
                     clock: dependencies.clock
                 )
             )

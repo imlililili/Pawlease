@@ -165,7 +165,7 @@ final class PostDetailViewModel {
             case .momentNotFound: return "This moment is no longer available."
             case .commentNotFound: return "That comment is no longer available."
             case .notCommentAuthor: return "You can only remove your own comments."
-            case .circleNotFound, .memberNotFound, .petNotFound, .feedLocked:
+            case .circleNotFound, .memberNotFound, .petNotFound, .feedLocked, .pendingDraftCorrupted:
                 return "Something went wrong. Please try again."
             }
         }

@@ -19,6 +19,7 @@ final class PetHomeViewModel {
     private(set) var todayMoments: [DailyMoment] = []
     private(set) var feedError: String?
     private(set) var syncStatus: CircleSyncStatus = .localChangesSaved
+    private(set) var pendingSharedDraft: PendingPostDraft?
     var isComposerPresented = false
 
     var viewState: PetHomeViewState? {
@@ -43,6 +44,10 @@ final class PetHomeViewModel {
     private let remoteChangeSignal: RemoteChangeSignaling
     private let cloudSyncEventSignal: CloudSyncEventSignaling
     private let publishWidgetSnapshotUseCase: PublishWidgetSnapshotUseCase
+    private let importPendingSharesUseCase: ImportPendingSharesUseCase
+    private let loadPendingDraftsUseCase: LoadPendingDraftsUseCase
+    private let loadPendingDraftImageUseCase: LoadPendingDraftImageUseCase
+    private let consumePendingDraftUseCase: ConsumePendingDraftUseCase
     private let clock: ClockProviding
     /// Held only to forward to `CircleSettingsView` when constructed — this
     /// ViewModel never calls CloudKit APIs on it directly.
@@ -68,6 +73,10 @@ final class PetHomeViewModel {
         cloudSyncEventSignal: CloudSyncEventSignaling,
         cloudSharingControllerProvider: CloudSharingControllerProviding,
         publishWidgetSnapshotUseCase: PublishWidgetSnapshotUseCase,
+        importPendingSharesUseCase: ImportPendingSharesUseCase,
+        loadPendingDraftsUseCase: LoadPendingDraftsUseCase,
+        loadPendingDraftImageUseCase: LoadPendingDraftImageUseCase,
+        consumePendingDraftUseCase: ConsumePendingDraftUseCase,
         clock: ClockProviding
     ) {
         self.loadPetHomeUseCase = loadPetHomeUseCase
@@ -89,6 +98,10 @@ final class PetHomeViewModel {
         self.cloudSyncEventSignal = cloudSyncEventSignal
         self.cloudSharingControllerProvider = cloudSharingControllerProvider
         self.publishWidgetSnapshotUseCase = publishWidgetSnapshotUseCase
+        self.importPendingSharesUseCase = importPendingSharesUseCase
+        self.loadPendingDraftsUseCase = loadPendingDraftsUseCase
+        self.loadPendingDraftImageUseCase = loadPendingDraftImageUseCase
+        self.consumePendingDraftUseCase = consumePendingDraftUseCase
         self.clock = clock
     }
 
@@ -126,6 +139,9 @@ final class PetHomeViewModel {
             let snapshot = try await loadPetHomeUseCase.execute()
             self.snapshot = snapshot
             await publishWidgetSnapshotUseCase.execute(from: snapshot)
+
+            await importPendingSharesUseCase.execute()
+            pendingSharedDraft = (try? await loadPendingDraftsUseCase.execute())?.first
 
             if snapshot.canViewTodayFeed {
                 do {
@@ -171,6 +187,26 @@ final class PetHomeViewModel {
         )
     }
 
+    /// Builds a composer prefilled with a shared photo the user hasn't
+    /// finished posting yet — the same composer and publish workflow as
+    /// `makeComposerViewModel()`, just seeded with the pending draft's
+    /// image and caption instead of starting empty.
+    func makeComposerViewModel(forPendingDraft draft: PendingPostDraft) -> PostComposerViewModel? {
+        guard let snapshot else { return nil }
+        let imageData = loadPendingDraftImageUseCase.execute(for: draft)
+        return PostComposerViewModel(
+            circle: snapshot.circle,
+            member: snapshot.currentMember,
+            publishDailyMomentUseCase: publishDailyMomentUseCase,
+            photoProcessingService: photoProcessingService,
+            prefilledImageData: imageData,
+            prefilledCaption: draft.caption,
+            pendingDraftID: draft.id,
+            pendingDraftImageFilename: draft.localImagePath,
+            consumePendingDraftUseCase: consumePendingDraftUseCase
+        )
+    }
+
     func makePostDetailViewModel(momentID: UUID) -> PostDetailViewModel? {
         guard let snapshot else { return nil }
         return PostDetailViewModel(
@@ -202,7 +238,7 @@ final class PetHomeViewModel {
             case .memberNotFound: return "We couldn't find your profile in this Circle."
             case .petNotFound: return "Your pet is missing. Please try again."
             case .feedLocked: return "Post today's moment to unlock your friends' feed."
-            case .momentNotFound, .commentNotFound, .notCommentAuthor:
+            case .momentNotFound, .commentNotFound, .notCommentAuthor, .pendingDraftCorrupted:
                 return "Something went wrong. Please try again."
             }
         }

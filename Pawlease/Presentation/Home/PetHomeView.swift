@@ -3,6 +3,7 @@ import SwiftUI
 struct PetHomeView: View {
     @State private var viewModel: PetHomeViewModel
     @State private var composerViewModel: PostComposerViewModel?
+    @Environment(\.scenePhase) private var scenePhase
 
     init(viewModel: PetHomeViewModel) {
         _viewModel = State(initialValue: viewModel)
@@ -14,6 +15,15 @@ struct PetHomeView: View {
             .task { await viewModel.loadIfNeeded() }
             .task { await viewModel.observeCloudSync() }
             .refreshable { await viewModel.refresh() }
+            // Re-checks the shared App Group inbox (via `refresh()`) every
+            // time the app becomes active — not just on cold launch — so a
+            // photo shared while Pawlease was backgrounded shows up without
+            // requiring a manual pull-to-refresh.
+            .onChange(of: scenePhase) { _, newPhase in
+                if newPhase == .active {
+                    Task { await viewModel.refresh() }
+                }
+            }
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     NavigationLink {
@@ -74,6 +84,10 @@ struct PetHomeView: View {
                 ContributorProgressCard(state: state)
                 SyncStatusBadge(status: viewModel.syncStatus)
 
+                if let pendingSharedDraft = viewModel.pendingSharedDraft {
+                    sharedDraftBanner(for: pendingSharedDraft)
+                }
+
                 Button {
                     composerViewModel = viewModel.makeComposerViewModel()
                     viewModel.presentComposer()
@@ -90,6 +104,36 @@ struct PetHomeView: View {
             }
             .padding()
         }
+    }
+
+    private func sharedDraftBanner(for draft: PendingPostDraft) -> some View {
+        Button {
+            composerViewModel = viewModel.makeComposerViewModel(forPendingDraft: draft)
+            viewModel.presentComposer()
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "square.and.arrow.up.circle.fill")
+                    .font(.title2)
+                    .foregroundStyle(Color.accentColor)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Shared Photo Ready")
+                        .font(.subheadline.bold())
+                    Text("Finish reviewing the photo you shared from Photos.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            .padding()
+            .frame(maxWidth: .infinity)
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Shared photo ready")
+        .accessibilityHint("Opens the composer with your shared photo so you can finish posting it.")
     }
 
     @ViewBuilder
