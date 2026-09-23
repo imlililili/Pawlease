@@ -25,4 +25,6 @@ enum DomainError: Error, Equatable, Sendable {
     /// image path, or source) — the record can't be represented as a
     /// `PendingPostDraft`.
     case pendingDraftCorrupted
+    /// Joining would exceed the Circle's maximum member count.
+    case membershipFull
 }
