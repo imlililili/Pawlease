@@ -8,6 +8,10 @@ final class InMemoryCircleRepository: CircleRepository, @unchecked Sendable {
         circle
     }
 
+    func fetchCircle(id: UUID) async throws -> FriendCircle? {
+        circle?.id == id ? circle : nil
+    }
+
     func saveCircle(_ circle: FriendCircle) async throws -> FriendCircle {
         self.circle = circle
         return circle
@@ -25,6 +29,19 @@ final class InMemoryMemberRepository: MemberRepository, @unchecked Sendable {
         members.removeAll { $0.id == member.id }
         members.append(member)
         return member
+    }
+}
+
+final class InMemoryUserProfileRepository: UserProfileRepository, @unchecked Sendable {
+    var profile: UserProfile?
+    private(set) var fetchOrCreateCallCount = 0
+
+    func fetchOrCreateCurrentProfile() async throws -> UserProfile {
+        fetchOrCreateCallCount += 1
+        if let profile { return profile }
+        let created = UserProfile(id: UUID(), displayName: "You", avatarEmoji: "🦊", createdAt: Date())
+        profile = created
+        return created
     }
 }
 
