@@ -21,6 +21,7 @@ final class PetHomeViewModel {
     private(set) var syncStatus: CircleSyncStatus = .localChangesSaved
     private(set) var pendingSharedDraft: PendingPostDraft?
     var isComposerPresented = false
+    var isJoinCirclePresented = false
 
     var viewState: PetHomeViewState? {
         snapshot.map(PetHomeViewState.init)
@@ -41,6 +42,11 @@ final class PetHomeViewModel {
     private let loadCircleSharingStateUseCase: LoadCircleSharingStateUseCase
     private let prepareCircleInvitationUseCase: PrepareCircleInvitationUseCase
     private let refreshSharedCircleUseCase: RefreshSharedCircleUseCase
+    private let loadActiveCircleInviteCodeUseCase: LoadActiveCircleInviteCodeUseCase
+    private let createCircleInviteCodeUseCase: CreateCircleInviteCodeUseCase
+    private let revokeCircleInviteCodeUseCase: RevokeCircleInviteCodeUseCase
+    private let resolveCircleInviteCodeUseCase: ResolveCircleInviteCodeUseCase
+    private let shareURLOpener: ShareURLOpening
     private let remoteChangeSignal: RemoteChangeSignaling
     private let cloudSyncEventSignal: CloudSyncEventSignaling
     private let publishWidgetSnapshotUseCase: PublishWidgetSnapshotUseCase
@@ -69,6 +75,11 @@ final class PetHomeViewModel {
         loadCircleSharingStateUseCase: LoadCircleSharingStateUseCase,
         prepareCircleInvitationUseCase: PrepareCircleInvitationUseCase,
         refreshSharedCircleUseCase: RefreshSharedCircleUseCase,
+        loadActiveCircleInviteCodeUseCase: LoadActiveCircleInviteCodeUseCase,
+        createCircleInviteCodeUseCase: CreateCircleInviteCodeUseCase,
+        revokeCircleInviteCodeUseCase: RevokeCircleInviteCodeUseCase,
+        resolveCircleInviteCodeUseCase: ResolveCircleInviteCodeUseCase,
+        shareURLOpener: ShareURLOpening,
         remoteChangeSignal: RemoteChangeSignaling,
         cloudSyncEventSignal: CloudSyncEventSignaling,
         cloudSharingControllerProvider: CloudSharingControllerProviding,
@@ -94,6 +105,11 @@ final class PetHomeViewModel {
         self.loadCircleSharingStateUseCase = loadCircleSharingStateUseCase
         self.prepareCircleInvitationUseCase = prepareCircleInvitationUseCase
         self.refreshSharedCircleUseCase = refreshSharedCircleUseCase
+        self.loadActiveCircleInviteCodeUseCase = loadActiveCircleInviteCodeUseCase
+        self.createCircleInviteCodeUseCase = createCircleInviteCodeUseCase
+        self.revokeCircleInviteCodeUseCase = revokeCircleInviteCodeUseCase
+        self.resolveCircleInviteCodeUseCase = resolveCircleInviteCodeUseCase
+        self.shareURLOpener = shareURLOpener
         self.remoteChangeSignal = remoteChangeSignal
         self.cloudSyncEventSignal = cloudSyncEventSignal
         self.cloudSharingControllerProvider = cloudSharingControllerProvider
@@ -227,7 +243,17 @@ final class PetHomeViewModel {
             checkCloudAccountUseCase: checkCloudAccountUseCase,
             loadCircleSharingStateUseCase: loadCircleSharingStateUseCase,
             prepareCircleInvitationUseCase: prepareCircleInvitationUseCase,
+            loadActiveCircleInviteCodeUseCase: loadActiveCircleInviteCodeUseCase,
+            createCircleInviteCodeUseCase: createCircleInviteCodeUseCase,
+            revokeCircleInviteCodeUseCase: revokeCircleInviteCodeUseCase,
             clock: clock
+        )
+    }
+
+    func makeJoinCircleViewModel() -> JoinCircleViewModel {
+        JoinCircleViewModel(
+            resolveCircleInviteCodeUseCase: resolveCircleInviteCodeUseCase,
+            shareURLOpener: shareURLOpener
         )
     }
 
@@ -238,7 +264,7 @@ final class PetHomeViewModel {
             case .memberNotFound: return "We couldn't find your profile in this Circle."
             case .petNotFound: return "Your pet is missing. Please try again."
             case .feedLocked: return "Post today's moment to unlock your friends' feed."
-            case .momentNotFound, .commentNotFound, .notCommentAuthor, .pendingDraftCorrupted:
+            case .momentNotFound, .commentNotFound, .notCommentAuthor, .pendingDraftCorrupted, .membershipFull:
                 return "Something went wrong. Please try again."
             }
         }

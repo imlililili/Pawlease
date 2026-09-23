@@ -43,7 +43,11 @@ struct PawleaseApp: App {
     private func acceptPendingInvitationIfNeeded() async {
         guard ShareAcceptanceCoordinator.shared.hasPendingInvitation else { return }
         do {
-            try await dependencies.acceptCircleInvitationUseCase.execute()
+            let handoff = try await dependencies.acceptCircleInvitationUseCase.execute()
+            // Ensure the shared store's merge has a chance to settle before
+            // locating the accepted Circle.
+            _ = try? await dependencies.refreshSharedCircleUseCase.execute()
+            try await dependencies.completeJoinedCircleMembershipUseCase.execute(handoff: handoff)
         } catch {
             print("Pawlease: failed to accept pending Circle invitation: \(error)")
         }

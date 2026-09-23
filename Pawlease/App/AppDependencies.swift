@@ -24,12 +24,18 @@ final class AppDependencies {
     let widgetTimelineReloader: WidgetTimelineReloading
     let pendingPostDraftRepository: PendingPostDraftRepository
     let shareInboxStore: ShareInboxStoring
+    let userProfileRepository: UserProfileRepository
+    let circleInviteCodeRepository: CircleInviteCodeRepository
 
     let photoProcessingService: PhotoProcessingService
     /// Infrastructure-layer adapter for the native sharing sheet. Held here
     /// (not on a ViewModel) and passed directly to the View that presents
     /// it, since CloudKit/UIKit types must never reach a ViewModel.
     let cloudSharingControllerProvider: CloudSharingControllerProviding
+    /// Infrastructure-layer adapter that opens a resolved CKShare URL — the
+    /// Join-a-Circle counterpart to `cloudSharingControllerProvider`. Held
+    /// here and passed to the ViewModel that needs it (never a Use Case).
+    let shareURLOpener: ShareURLOpening
 
     let seedDemoCircleUseCase: SeedDemoCircleUseCase
     let loadPetHomeUseCase: LoadPetHomeUseCase
@@ -46,6 +52,11 @@ final class AppDependencies {
     let loadCircleSharingStateUseCase: LoadCircleSharingStateUseCase
     let refreshSharedCircleUseCase: RefreshSharedCircleUseCase
     let loadCircleMembersUseCase: LoadCircleMembersUseCase
+    let createCircleInviteCodeUseCase: CreateCircleInviteCodeUseCase
+    let resolveCircleInviteCodeUseCase: ResolveCircleInviteCodeUseCase
+    let revokeCircleInviteCodeUseCase: RevokeCircleInviteCodeUseCase
+    let loadActiveCircleInviteCodeUseCase: LoadActiveCircleInviteCodeUseCase
+    let completeJoinedCircleMembershipUseCase: CompleteJoinedCircleMembershipUseCase
     let publishWidgetSnapshotUseCase: PublishWidgetSnapshotUseCase
     let importPendingSharesUseCase: ImportPendingSharesUseCase
     let loadPendingDraftsUseCase: LoadPendingDraftsUseCase
@@ -94,6 +105,11 @@ final class AppDependencies {
         let pendingDraftRepo = CoreDataPendingPostDraftRepository(container: container)
         self.pendingPostDraftRepository = pendingDraftRepo
         self.shareInboxStore = AppGroupShareInboxStore()
+        let userProfileRepo = CoreDataUserProfileRepository(container: container, clock: clock)
+        self.userProfileRepository = userProfileRepo
+        let circleInviteCodeRepo = CloudKitCircleInviteCodeRepository()
+        self.circleInviteCodeRepository = circleInviteCodeRepo
+        self.shareURLOpener = SystemShareURLOpener()
 
         self.seedDemoCircleUseCase = SeedDemoCircleUseCase(
             circleRepository: circleRepo,
@@ -151,6 +167,23 @@ final class AppDependencies {
             loadPetHomeUseCase: self.loadPetHomeUseCase
         )
         self.loadCircleMembersUseCase = LoadCircleMembersUseCase(memberRepository: memberRepo)
+        self.createCircleInviteCodeUseCase = CreateCircleInviteCodeUseCase(
+            prepareCircleInvitationUseCase: self.prepareCircleInvitationUseCase,
+            circleInviteCodeRepository: circleInviteCodeRepo,
+            clock: clock
+        )
+        self.resolveCircleInviteCodeUseCase = ResolveCircleInviteCodeUseCase(
+            circleInviteCodeRepository: circleInviteCodeRepo,
+            clock: clock
+        )
+        self.revokeCircleInviteCodeUseCase = RevokeCircleInviteCodeUseCase(circleInviteCodeRepository: circleInviteCodeRepo)
+        self.loadActiveCircleInviteCodeUseCase = LoadActiveCircleInviteCodeUseCase(circleInviteCodeRepository: circleInviteCodeRepo)
+        self.completeJoinedCircleMembershipUseCase = CompleteJoinedCircleMembershipUseCase(
+            circleRepository: circleRepo,
+            memberRepository: memberRepo,
+            userProfileRepository: userProfileRepo,
+            clock: clock
+        )
         self.publishWidgetSnapshotUseCase = PublishWidgetSnapshotUseCase(
             widgetSnapshotStore: self.widgetSnapshotStore,
             widgetTimelineReloader: self.widgetTimelineReloader,

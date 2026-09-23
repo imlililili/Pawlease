@@ -86,6 +86,8 @@ struct CircleSettingsView: View {
                 }
             }
 
+            inviteCodeSection
+
             if let actionErrorMessage = viewModel.actionErrorMessage {
                 Section {
                     Text(actionErrorMessage)
@@ -112,6 +114,76 @@ struct CircleSettingsView: View {
                         ? "Opens the invitation sheet to add friends to your Circle."
                         : "Sign in to iCloud to invite friends."
                 )
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var inviteCodeSection: some View {
+        Section("Invite Code") {
+            switch viewModel.inviteCodeState {
+            case .none:
+                Button("Create Invite Code") {
+                    Task { await viewModel.createInviteCode() }
+                }
+                .disabled(viewModel.isCreatingInviteCode)
+                .accessibilityHint("Generates a code you can share with a friend to join this Circle.")
+
+            case .loading:
+                HStack {
+                    ProgressView()
+                    Text("Creating invite code…")
+                }
+
+            case .active(let display):
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(display.formattedCode)
+                        .font(.title2.monospaced().bold())
+                        .accessibilityLabel("Invite code \(display.formattedCode)")
+                    Text(display.expiresAtLabel)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    if viewModel.didCopyInviteCode {
+                        Text("Copied!")
+                            .font(.caption)
+                            .foregroundStyle(.green)
+                    }
+                }
+                HStack {
+                    Button("Copy") {
+                        UIPasteboard.general.string = display.formattedCode
+                        viewModel.markInviteCodeCopied()
+                    }
+                    Spacer()
+                    ShareLink(item: display.shareURL) {
+                        Label("Share", systemImage: "square.and.arrow.up")
+                    }
+                    Spacer()
+                    Button("Refresh") {
+                        Task { await viewModel.refresh() }
+                    }
+                }
+                .buttonStyle(.borderless)
+                Button("Revoke Code", role: .destructive) {
+                    Task { await viewModel.revokeInviteCode() }
+                }
+                .disabled(viewModel.isRevokingInviteCode)
+
+            case .revoked:
+                Text("This invite code has been revoked.")
+                    .foregroundStyle(.secondary)
+                Button("Create New Invite Code") {
+                    Task { await viewModel.createInviteCode() }
+                }
+                .disabled(viewModel.isCreatingInviteCode)
+
+            case .error(let message):
+                Text(message)
+                    .foregroundStyle(.red)
+                Button("Try Again") {
+                    Task { await viewModel.createInviteCode() }
+                }
+                .disabled(viewModel.isCreatingInviteCode)
             }
         }
     }
