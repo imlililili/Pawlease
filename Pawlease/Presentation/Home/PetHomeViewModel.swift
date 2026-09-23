@@ -59,6 +59,16 @@ final class PetHomeViewModel {
     /// ViewModel never calls CloudKit APIs on it directly.
     let cloudSharingControllerProvider: CloudSharingControllerProviding
 
+    /// `.task { loadIfNeeded() }`, `.onChange(of: scenePhase)` becoming
+    /// `.active`, and a remote-change pulse from `observeRemoteChanges()`
+    /// can all fire `refresh()` around the same moment — most notably at
+    /// cold launch. Without coalescing, each overlapping call independently
+    /// ran `SeedDemoCircleUseCase.execute()`, which is how a concurrent-
+    /// seeding race could persist duplicate demo members. Overlapping
+    /// callers now await the one in-flight refresh instead of starting a
+    /// second one.
+    private var inFlightRefresh: Task<Void, Never>?
+
     init(
         loadPetHomeUseCase: LoadPetHomeUseCase,
         loadTodayMomentsUseCase: LoadTodayMomentsUseCase,
@@ -149,6 +159,17 @@ final class PetHomeViewModel {
     }
 
     func refresh() async {
+        if let inFlightRefresh {
+            await inFlightRefresh.value
+            return
+        }
+        let task = Task { await performRefresh() }
+        inFlightRefresh = task
+        await task.value
+        inFlightRefresh = nil
+    }
+
+    private func performRefresh() async {
         loadState = .loading
         do {
             _ = try await seedDemoCircleUseCase.execute()
