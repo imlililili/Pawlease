@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="24660" systemVersion="24A335" minimumToolsVersion="Automatic" sourceLanguage="Swift" usedWithCloudKit="false" userDefinedModelVersionIdentifier="">
+<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="24660" systemVersion="24A335" minimumToolsVersion="Automatic" sourceLanguage="Swift" usedWithCloudKit="YES" userDefinedModelVersionIdentifier="">
     <entity name="UserProfileEntity" representedClassName="UserProfileEntity" syncable="YES" codeGenerationType="class">
         <attribute name="avatarEmoji" optional="YES" attributeType="String"/>
         <attribute name="createdAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
@@ -80,6 +80,19 @@
         <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
         <relationship name="comment" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="CommentEntity" inverseName="commentReactions" inverseEntity="CommentEntity"/>
     </entity>
+    <configuration name="Private" usedWithCloudKit="YES">
+        <memberEntity name="UserProfileEntity"/>
+        <memberEntity name="PendingPostDraftEntity"/>
+    </configuration>
+    <configuration name="Shared" usedWithCloudKit="YES">
+        <memberEntity name="CircleEntity"/>
+        <memberEntity name="MemberEntity"/>
+        <memberEntity name="PetEntity"/>
+        <memberEntity name="DailyPostEntity"/>
+        <memberEntity name="CommentEntity"/>
+        <memberEntity name="PostReactionEntity"/>
+        <memberEntity name="CommentReactionEntity"/>
+    </configuration>
     <elements>
         <element name="UserProfileEntity" positionX="-380" positionY="-360" width="128" height="89"/>
         <element name="PendingPostDraftEntity" positionX="-380" positionY="-240" width="128" height="104"/>

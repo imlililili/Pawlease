@@ -1,12 +1,14 @@
 import SwiftUI
 
-/// Phase 1 is fully local-first, so sync status is always "saved on this
-/// device." Per-moment CloudKit sync status arrives in a later phase.
+/// Reflects `CircleSyncStatus` — only ever states the platform actually
+/// gave evidence for (see `CircleSyncStatus` and `CoreDataCloudSyncEventSignal`).
 struct SyncStatusBadge: View {
+    let status: CircleSyncStatus
+
     var body: some View {
-        Label("Saved on this device", systemImage: "checkmark.icloud")
+        Label(status.displayName, systemImage: status.systemImageName)
             .font(.caption)
             .foregroundStyle(.secondary)
-            .accessibilityLabel("Your moments are saved on this device")
+            .accessibilityLabel(status.displayName)
     }
 }

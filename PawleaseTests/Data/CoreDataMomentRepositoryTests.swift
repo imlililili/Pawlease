@@ -7,7 +7,7 @@ struct CoreDataMomentRepositoryTests {
     /// that the repository boundary always hands back Sendable `DailyMoment`
     /// domain structs — never `NSManagedObject` instances — to callers.
     @Test func inMemoryStoreCanSaveAndFetchADailyMoment() async throws {
-        let persistence = PersistenceController(inMemory: true)
+        let persistence = PersistenceController(mode: .inMemory)
         let circleRepo = CoreDataCircleRepository(container: persistence.container)
         let momentRepo = CoreDataMomentRepository(container: persistence.container)
 

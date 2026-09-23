@@ -12,7 +12,20 @@ struct PetHomeView: View {
         content
             .navigationTitle("Pet Home")
             .task { await viewModel.loadIfNeeded() }
+            .task { await viewModel.observeCloudSync() }
             .refreshable { await viewModel.refresh() }
+            .toolbar {
+                ToolbarItem(placement: .primaryAction) {
+                    NavigationLink {
+                        CircleSettingsView(
+                            viewModel: viewModel.makeCircleSettingsViewModel(),
+                            cloudSharingControllerProvider: viewModel.cloudSharingControllerProvider
+                        )
+                    } label: {
+                        Label("Circle Settings", systemImage: "gearshape")
+                    }
+                }
+            }
             .sheet(isPresented: $viewModel.isComposerPresented, onDismiss: handleComposerDismiss) {
                 if let composerViewModel {
                     NavigationStack {
@@ -59,7 +72,7 @@ struct PetHomeView: View {
             VStack(spacing: 20) {
                 PetStateCard(state: state)
                 ContributorProgressCard(state: state)
-                SyncStatusBadge()
+                SyncStatusBadge(status: viewModel.syncStatus)
 
                 Button {
                     composerViewModel = viewModel.makeComposerViewModel()
