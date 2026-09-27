@@ -3,7 +3,9 @@ import SwiftUI
 
 struct PostComposerView: View {
     @State private var viewModel: PostComposerViewModel
+    @State private var isPhotoSourceDialogPresented = false
     @State private var isCameraPresented = false
+    @State private var isPhotoLibraryPresented = false
     @Environment(\.dismiss) private var dismiss
 
     init(viewModel: PostComposerViewModel) {
@@ -13,23 +15,14 @@ struct PostComposerView: View {
     var body: some View {
         Form {
             Section {
-                photoPreview
-
-                HStack {
-                    Button {
-                        isCameraPresented = true
-                    } label: {
-                        Label("Take Photo", systemImage: "camera.fill")
-                            .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.borderedProminent)
-
-                    PhotosPicker(selection: $viewModel.selectedItem, matching: .images) {
-                        Label("Photo Library", systemImage: "photo.on.rectangle")
-                            .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.bordered)
+                Button {
+                    isPhotoSourceDialogPresented = true
+                } label: {
+                    photoPreview
                 }
+                .buttonStyle(.plain)
+                .accessibilityLabel(viewModel.previewImage == nil ? "Add today's photo" : "Change today's photo")
+                .accessibilityHint("Choose whether to take a photo or select one from your photo library")
             }
 
             Section {
@@ -79,6 +72,24 @@ struct PostComposerView: View {
                 viewModel.setCapturedPhotoData(data)
             }
         }
+        .confirmationDialog(
+            "Add Today's Photo",
+            isPresented: $isPhotoSourceDialogPresented,
+            titleVisibility: .visible
+        ) {
+            Button("Take Photo") {
+                isCameraPresented = true
+            }
+            Button("Photo Library") {
+                isPhotoLibraryPresented = true
+            }
+            Button("Cancel", role: .cancel) {}
+        }
+        .photosPicker(
+            isPresented: $isPhotoLibraryPresented,
+            selection: $viewModel.selectedItem,
+            matching: .images
+        )
     }
 
     @ViewBuilder

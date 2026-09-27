@@ -14,8 +14,8 @@ final class PawleaseUITests: XCTestCase {
     }
 
     /// Confirms the seeded Circle opens the photo-first Moment composer,
-    /// exposes both capture sources, and handles Simulator's missing camera
-    /// hardware without crashing or trapping the user.
+    /// presents both capture sources only after the photo surface is tapped,
+    /// and handles Simulator's missing camera without trapping the user.
     @MainActor
     func testPetHomeShowsSeededCircleAndComposerGatesPublish() throws {
         let app = XCUIApplication()
@@ -34,10 +34,13 @@ final class PawleaseUITests: XCTestCase {
         let publishButton = app.buttons["Publish"]
         XCTAssertTrue(publishButton.waitForExistence(timeout: 5))
         XCTAssertFalse(publishButton.isEnabled)
-        XCTAssertTrue(app.buttons["Take Photo"].exists)
-        XCTAssertTrue(app.buttons["Photo Library"].exists)
+        XCTAssertFalse(app.buttons["Take Photo"].exists)
+        XCTAssertFalse(app.buttons["Photo Library"].exists)
         XCTAssertFalse(app.staticTexts["Mood (optional)"].exists)
 
+        app.buttons["Add today's photo"].tap()
+        XCTAssertTrue(app.buttons["Take Photo"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Photo Library"].exists)
         app.buttons["Take Photo"].tap()
         XCTAssertTrue(app.staticTexts["Camera Unavailable"].waitForExistence(timeout: 5))
         app.buttons["Back"].tap()
