@@ -369,6 +369,120 @@ under `iCloud.com.lili.Pawlease` → **Development**. All testing in this
 phase targets the *Development* environment — no Production CloudKit
 environment has been configured or used.
 
+### Invite-code architecture (public database lookup)
+
+A Circle owner can generate a short, human-readable code (e.g.
+`PAW-7K3Q-X9RM`) instead of sending a Messages/Mail link. **The code is only
+a lookup mechanism — it is never authorization by itself.** The data flow is
+always:
+
+```
+Invite code → public CloudKit lookup → CKShare URL → Apple CKShare acceptance → shared-store import → Circle membership completion
+```
+
+Resolving a code never grants access on its own; access is only ever
+granted by Apple's own `CKShare` acceptance flow, exactly as it already
+worked for Messages/Mail-delivered invitations (see "How CKShare
+invitations work" above) — the code just changes how the friend arrives at
+that same `CKShare` URL.
+
+**Why the public database:** the code has to be resolvable by a friend who
+has not yet joined the Circle and therefore has no access to the private or
+shared databases at all. CloudKit's public database is the only database
+scope reachable by any signed-in iCloud user regardless of Circle
+membership, which is exactly the (very narrow) capability this lookup
+needs.
+
+**Why the code is not authorization:** the public database is, by
+definition, readable by anyone with a container reference. If the code
+itself conferred access, anyone who guessed or intercepted it could join
+any Circle. Instead, the public record only stores a `CKShare` URL — and
+opening that URL still has to pass through Apple's own participant/share
+acceptance UI, which is what actually grants access. Nothing about
+resolving a code in `ResolveCircleInviteCodeUseCase` touches Circle
+membership.
+
+**Record schema** (`CircleInviteCode`, defined in
+`Data/CloudKit/CircleInviteCodeRecordSchema.swift`) — deliberately minimal,
+holding nothing but a lookup:
+
+| Field | Type | Notes |
+|---|---|---|
+| `shareURL` | String | The `CKShare`'s URL |
+| `circleID` | String (UUID) | Which Circle this code resolves to |
+| `createdAt` | Date | |
+| `expiresAt` | Date | `createdAt` + 48 hours |
+| `isRevoked` | Int64 (0/1) | Set by the owner's "Revoke" action, or superseded automatically when a replacement code is created |
+| `schemaVersion` | Int64 | Currently `1` — fetched records with an unrecognized version are rejected rather than guessed at |
+
+**Never stored here:** owner display name, member details, pet data,
+photos, or captions — only what's needed to resolve a code to a share URL.
+
+The normalized code (e.g. `PAW7K3QX9RM`) is used directly as the record's
+`CKRecord.ID.recordName`, so a friend's lookup is a single fetch-by-ID
+(`CKDatabase.record(for:)`) rather than a query across every invite-code
+record ever created. The owner's own "what's my current code" and
+"supersede the previous code" operations are the only place a `CKQuery`
+(filtered by `circleID`) is used.
+
+**Code generation** (`Domain/Models/CircleInviteCode.swift`): 8 random
+characters from `SystemRandomNumberGenerator` — which Swift's standard
+library documents as cryptographically secure where the platform provides
+one — drawn from an uppercase, unambiguous 32-character alphabet
+(`ABCDEFGHJKLMNPQRSTUVWXYZ23456789`, excluding `0`/`O`/`1`/`I`). No
+external random-code service is ever called. User input is normalized
+(trim whitespace, remove hyphens, uppercase) and validated locally —
+rejecting a malformed code — before any CloudKit request is made.
+
+**Expiration and revocation:**
+- Codes expire 48 hours after creation (`CircleInviteCode.validityDuration`).
+  Expiration is checked in `ResolveCircleInviteCodeUseCase`, comparing
+  `expiresAt` against the injected clock — never trusted from client-side
+  wall-clock state alone without also being stored server-side.
+- The owner can revoke a code at any time from Circle Settings; revocation
+  sets `isRevoked = 1` on the existing record rather than deleting it (so a
+  friend who already fetched it gets a clear "revoked" message rather than
+  "not found").
+  Revocation failure is surfaced but never blocks anything else — it
+  remains safely retryable.
+- Creating a replacement code (`CreateCircleInviteCodeUseCase`) looks up and
+  revokes the circle's previous active code first (best-effort — a failure
+  to revoke the old one doesn't block publishing the new one, since the old
+  code will still expire on its own 48-hour clock).
+- The unlikely case of a freshly generated code colliding with an existing
+  record ID is handled by retrying with a new code, up to 5 attempts,
+  surfacing `CircleInviteCodeError.retryLimitExceeded` if every attempt
+  collides.
+
+**CloudKit Console setup required:** the `CircleInviteCode` record type and
+its six fields (table above) must be created once in [CloudKit
+Dashboard](https://icloud.developer.apple.com/dashboard/) → the
+`iCloud.com.lili.Pawlease` container → **Development** environment →
+**Schema** → **Record Types**, with the public database's default
+**World** security role granted **Read** (so any signed-in user can resolve
+a code) — the app itself never creates the schema. This is separate from,
+and in addition to, the Developer Portal steps above; no code change is
+needed once the schema exists, but the schema itself cannot be created from
+this environment (see the Personal Team limitation below).
+
+**Required indexes:** `CloudKitCircleInviteCodeRepository.fetchActiveCode(circleID:)`
+— the owner-side lookup used to redisplay the current code and to
+revoke/supersede it when creating a replacement — runs a compound `CKQuery`
+against `CircleInviteCode` filtered by `circleID` **and** `isRevoked`, sorted
+by `createdAt` descending (so the most recent non-revoked code for that
+Circle comes back first). For that query to succeed, CloudKit Console's
+**Indexes** tab for the `CircleInviteCode` record type must have:
+
+- `circleID` marked **Queryable**
+- `isRevoked` marked **Queryable**
+- `createdAt` marked **Sortable**
+
+All three are configured on the same **Schema** → **Record Types** →
+`CircleInviteCode` screen as the fields themselves, in the **Indexes**
+section. Without them, `fetchActiveCode(circleID:)` fails at query time even
+though the record type and fields exist — this is a separate, additional
+step from creating the fields themselves.
+
 ### Local development fallback
 
 The app never requires iCloud to run:
@@ -449,7 +563,19 @@ an unused capability to provision.
   support stubbed results, injected errors, captured arguments, and
   invocation counts. **No real CloudKit or Core Data involved** — this
   includes every CloudKit-sharing-related test (account status mapping,
-  invitation preparation/reuse/failure, invitation acceptance).
+  invitation preparation/reuse/failure, invitation acceptance) and every
+  invite-code test (`MockCircleInviteCodeRepository`): generation/format/
+  normalization, malformed-code rejection, active-code resolution,
+  expiration, revocation, not-found, collision-and-retry, retry-limit,
+  offline handling, code replacement/supersession, and joined-membership
+  completion (one distinct Member created, idempotent on repeat, a sixth
+  member rejected, a share failure never deleting the local Circle).
+- `CloudKitCircleInviteCodeRepositoryIntegrationTests`
+  (`PawleaseTests/Data`) — a **clearly separate**, real-public-database
+  integration test, disabled by default (`@Suite(.disabled(...))`) since it
+  needs a signed-in iCloud account and a schema-deployed container that
+  this environment cannot provide; not counted among the mock-based tests
+  above.
 - **Data tests** (`PawleaseTests/Data`) — integration tests against a real,
   temporary, on-disk (non-CloudKit) Core Data stack
   (`PersistenceController(mode: .inMemory)`), proving the schema, mappers,
@@ -506,6 +632,40 @@ Until this procedure is actually run and its outcome recorded, treat
 CloudKit sharing as **implemented and unit-tested, but not verified
 end-to-end**.
 
+### Manual two-device test procedure — invite code variant
+
+**This procedure has also not yet been performed**, for the same reasons as
+above, plus it additionally requires the `CircleInviteCode` record type to
+already be deployed to the container's schema (§13's CloudKit Console
+setup step).
+
+1. Complete the CloudKit Console schema step in §13 in addition to the
+   Developer Portal steps.
+2. Device A opens **Circle Settings** → **Create Invite Code**. Confirm a
+   code like `PAW-7K3Q-X9RM` appears, with an expiration time roughly 48
+   hours out.
+3. Device A taps **Copy** or **Share** and sends the code to Device B by any
+   channel (text, verbally, etc. — the code itself is not a link).
+4. Device B, signed into a **different** iCloud account, taps **Join a
+   Circle** on Pet Home and types in the code (auto-normalized as typed).
+5. Device B taps **Join Circle**. Confirm the app resolves the code (no
+   error for expired/revoked/not-found) and opens the system CKShare
+   acceptance flow via `UIApplication.shared.open(_:)`.
+6. Confirm Device B ends up on the same acceptance UI as the Messages/Mail
+   flow (§17 above), accepts, and — same as step 7 above — sees the shared
+   Circle and pet after the next foreground.
+7. On Device A, tap **Revoke Code**. Confirm a fresh **Join a Circle**
+   attempt on a third device (or a re-typed code on Device B) is rejected
+   as revoked, and that Device B's already-completed membership from step 6
+   is unaffected (revoking a code never removes an existing member).
+8. On Device A, tap **Create Invite Code** again. Confirm the previous code
+   (from step 2) is revoked (supersession) and a new, different code
+   appears.
+
+Until this procedure is actually run and its outcome recorded, treat the
+invite-code workflow as **implemented and unit-tested, but not verified
+end-to-end against real public CloudKit or a second iCloud account**.
+
 ## 18. Known limitations
 
 - **Two-device CloudKit sharing has not been manually verified** — see §17.
@@ -521,20 +681,44 @@ end-to-end**.
   per-record confirmation (the platform doesn't expose that granularity).
 - **One active Circle per user** — creating or joining a second Circle is
   not supported in this MVP.
+- **Invite-code CloudKit Console schema not yet deployed** — the
+  `CircleInviteCode` record type and its public-database **World: Read**
+  permission must be created once in CloudKit Dashboard before the
+  invite-code workflow can be exercised against real CloudKit; see §13.
+- **Invite-code two-device flow has not been manually verified** — see the
+  invite-code variant of §17.
+- **Membership-completion timing is best-effort, not guaranteed** —
+  `CompleteJoinedCircleMembershipUseCase` runs immediately after CKShare
+  acceptance, but there is no confirmed signal that the `.shared`-scope
+  store has actually finished merging the newly accepted Circle by that
+  point. If it hasn't, the accepted-share-to-local-Circle match
+  (`CloudKitCircleSharingRepository.resolveAcceptedCircleID`) finds nothing,
+  `AcceptedCircleHandoff.circleID` is `nil`, and membership completion fails
+  silently (logged only) rather than guessing — matching this app's existing
+  "failure here is printed, never crashes, never touches local data"
+  philosophy for acceptance. A production hardening pass would add an
+  explicit retry (e.g. on the next Circle Settings load) rather than relying
+  on a single best-effort attempt.
 - Widget, Share Extension, memory calendar, and final pet artwork remain
   unimplemented — see §21.
 
 ## 19. Privacy explanation
 
 Pawlease stores Circle data (moments, comments, reactions, membership) in
-Apple's CloudKit **private** and **shared** databases only — never the
-public database, and never on any non-Apple server. A Circle's data is only
-visible to its invited members, via Apple's own `CKShare` participant model
-(private sharing — never publicly discoverable or searchable). Photos are
-stored as Core Data binary attributes with external storage, mirrored
-through the same private/shared CloudKit zones as everything else — no
-separate media hosting service is used. No analytics, tracking, or
-third-party SDKs are present anywhere in the project.
+Apple's CloudKit **private** and **shared** databases only. The one
+exception is the invite-code feature's public-database lookup record
+(`CircleInviteCode` — see §13), which deliberately holds nothing but a
+`CKShare` URL, a Circle UUID, timestamps, and a revoked flag; it never
+carries a name, a photo, a caption, or any other Circle content, and
+resolving it is never itself authorization (see §13's "why the code is not
+authorization"). Every other Circle-owned record — moments, comments,
+reactions, membership — stays in the private/shared databases and is only
+visible to a Circle's invited members, via Apple's own `CKShare`
+participant model (private sharing — never publicly discoverable or
+searchable). Photos are stored as Core Data binary attributes with external
+storage, mirrored through the same private/shared CloudKit zones as
+everything else — no separate media hosting service is used. No analytics,
+tracking, or third-party SDKs are present anywhere in the project.
 
 ## 20. Current implementation status
 

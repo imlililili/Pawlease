@@ -15,6 +15,7 @@ final class MockCircleSharingRepository: CircleSharingRepository, @unchecked Sen
     private(set) var prepareShareCapturedCircleIDs: [UUID] = []
 
     var acceptPendingInvitationError: Error?
+    var acceptPendingInvitationResult = AcceptedCircleHandoff(circleID: nil)
     private(set) var acceptPendingInvitationCallCount = 0
 
     func sharingState(circleID: UUID) async throws -> CircleSharingState {
@@ -32,8 +33,10 @@ final class MockCircleSharingRepository: CircleSharingRepository, @unchecked Sen
         return prepareShareResult ?? PreparedCircleShare(circleID: circleID, isNewShare: true)
     }
 
-    func acceptPendingInvitation() async throws {
+    @discardableResult
+    func acceptPendingInvitation() async throws -> AcceptedCircleHandoff {
         acceptPendingInvitationCallCount += 1
         if let acceptPendingInvitationError { throw acceptPendingInvitationError }
+        return acceptPendingInvitationResult
     }
 }

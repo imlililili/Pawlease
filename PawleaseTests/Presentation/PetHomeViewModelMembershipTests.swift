@@ -1,0 +1,102 @@
+import Testing
+import Foundation
+@testable import Pawlease
+
+/// Regression coverage for the Circle Settings duplicate-member bug's
+/// actual trigger: `.task { loadIfNeeded() }`, `.onChange(of: scenePhase)`
+/// becoming `.active`, and a remote-change pulse can all call
+/// `PetHomeViewModel.refresh()` around the same moment — most notably at
+/// cold launch. Before the fix, each overlapping call independently ran
+/// `SeedDemoCircleUseCase.execute()`. This drives many concurrent
+/// `refresh()` calls against the real Core Data stack and proves the
+/// ViewModel's coalescing guard, together with the repository-level fix,
+/// leaves exactly the three seeded members behind.
+@MainActor
+struct PetHomeViewModelMembershipTests {
+    private func makeViewModel(container: PersistenceController, clock: ClockProviding) -> PetHomeViewModel {
+        let circleRepo = CoreDataCircleRepository(container: container.container)
+        let memberRepo = CoreDataMemberRepository(container: container.container)
+        let petRepo = CoreDataPetRepository(container: container.container)
+        let momentRepo = InMemoryMomentRepository()
+
+        let loadPetHomeUseCase = LoadPetHomeUseCase(
+            circleRepository: circleRepo, memberRepository: memberRepo, petRepository: petRepo,
+            momentRepository: momentRepo, clock: clock, currentProfileID: DemoSeed.currentProfileID
+        )
+        let accountProvider = MockCloudAccountStatusProvider()
+        let sharingRepo = MockCircleSharingRepository()
+        let inviteCodeRepo = MockCircleInviteCodeRepository()
+        let pendingDraftRepo = MockPendingPostDraftRepository()
+        let shareInboxStore = MockShareInboxStore()
+        let prepareInvitationUseCase = PrepareCircleInvitationUseCase(
+            cloudAccountStatusProvider: accountProvider, circleSharingRepository: sharingRepo
+        )
+
+        return PetHomeViewModel(
+            loadPetHomeUseCase: loadPetHomeUseCase,
+            loadTodayMomentsUseCase: LoadTodayMomentsUseCase(momentRepository: momentRepo),
+            seedDemoCircleUseCase: SeedDemoCircleUseCase(
+                circleRepository: circleRepo, memberRepository: memberRepo, petRepository: petRepo, clock: clock
+            ),
+            publishDailyMomentUseCase: PublishDailyMomentUseCase(momentRepository: momentRepo, clock: clock),
+            photoProcessingService: PhotoProcessingService(),
+            loadMomentDetailUseCase: LoadMomentDetailUseCase(
+                momentRepository: momentRepo,
+                commentRepository: MockCommentRepository(),
+                momentReactionRepository: MockMomentReactionRepository(),
+                commentReactionRepository: MockCommentReactionRepository()
+            ),
+            addCommentUseCase: AddCommentUseCase(commentRepository: MockCommentRepository(), momentRepository: momentRepo, clock: clock),
+            removeCommentUseCase: RemoveCommentUseCase(commentRepository: MockCommentRepository()),
+            reactToMomentUseCase: ReactToMomentUseCase(momentReactionRepository: MockMomentReactionRepository(), clock: clock),
+            reactToCommentUseCase: ReactToCommentUseCase(commentReactionRepository: MockCommentReactionRepository(), clock: clock),
+            loadCircleMembersUseCase: LoadCircleMembersUseCase(memberRepository: memberRepo),
+            checkCloudAccountUseCase: CheckCloudAccountUseCase(cloudAccountStatusProvider: accountProvider),
+            loadCircleSharingStateUseCase: LoadCircleSharingStateUseCase(circleSharingRepository: sharingRepo),
+            prepareCircleInvitationUseCase: prepareInvitationUseCase,
+            refreshSharedCircleUseCase: RefreshSharedCircleUseCase(loadPetHomeUseCase: loadPetHomeUseCase),
+            loadActiveCircleInviteCodeUseCase: LoadActiveCircleInviteCodeUseCase(circleInviteCodeRepository: inviteCodeRepo),
+            createCircleInviteCodeUseCase: CreateCircleInviteCodeUseCase(
+                prepareCircleInvitationUseCase: prepareInvitationUseCase,
+                circleInviteCodeRepository: inviteCodeRepo,
+                clock: clock
+            ),
+            revokeCircleInviteCodeUseCase: RevokeCircleInviteCodeUseCase(circleInviteCodeRepository: inviteCodeRepo),
+            resolveCircleInviteCodeUseCase: ResolveCircleInviteCodeUseCase(circleInviteCodeRepository: inviteCodeRepo, clock: clock),
+            shareURLOpener: NoOpShareURLOpener(),
+            remoteChangeSignal: NoOpRemoteChangeSignal(),
+            cloudSyncEventSignal: NoOpCloudSyncEventSignal(),
+            cloudSharingControllerProvider: NoOpCloudSharingControllerProvider(),
+            publishWidgetSnapshotUseCase: PublishWidgetSnapshotUseCase(
+                widgetSnapshotStore: MockWidgetSnapshotStore(), widgetTimelineReloader: MockWidgetTimelineReloader(), clock: clock
+            ),
+            importPendingSharesUseCase: ImportPendingSharesUseCase(shareInboxStore: shareInboxStore, pendingPostDraftRepository: pendingDraftRepo),
+            loadPendingDraftsUseCase: LoadPendingDraftsUseCase(pendingPostDraftRepository: pendingDraftRepo),
+            loadPendingDraftImageUseCase: LoadPendingDraftImageUseCase(shareInboxStore: shareInboxStore),
+            consumePendingDraftUseCase: ConsumePendingDraftUseCase(pendingPostDraftRepository: pendingDraftRepo, shareInboxStore: shareInboxStore),
+            clock: clock
+        )
+    }
+
+    @Test
+    func concurrentRefreshCallsNeverCreateDuplicateMembers() async throws {
+        let persistence = PersistenceController(mode: .inMemory)
+        let clock = SystemClock()
+        let viewModel = makeViewModel(container: persistence, clock: clock)
+
+        // Reproduces the real trigger: `.task`, `.onChange(of: scenePhase)`,
+        // and a remote-change pulse can all call `refresh()` at once.
+        await withTaskGroup(of: Void.self) { group in
+            for _ in 0..<5 {
+                group.addTask { await viewModel.refresh() }
+            }
+        }
+
+        #expect(viewModel.loadState == .loaded)
+
+        let memberRepo = CoreDataMemberRepository(container: persistence.container)
+        let members = try await memberRepo.fetchMembers(circleID: DemoSeed.circleID)
+        #expect(members.count == 3)
+        #expect(Set(members.map(\.profileID)) == Set(DemoSeed.memberProfileIDs))
+    }
+}

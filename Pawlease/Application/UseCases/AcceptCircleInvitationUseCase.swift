@@ -7,7 +7,8 @@
 struct AcceptCircleInvitationUseCase: Sendable {
     let circleSharingRepository: CircleSharingRepository
 
-    func execute() async throws {
+    @discardableResult
+    func execute() async throws -> AcceptedCircleHandoff {
         try await circleSharingRepository.acceptPendingInvitation()
     }
 }

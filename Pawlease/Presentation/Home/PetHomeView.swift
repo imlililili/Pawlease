@@ -35,6 +35,13 @@ struct PetHomeView: View {
                         Label("Circle Settings", systemImage: "gearshape")
                     }
                 }
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        viewModel.isJoinCirclePresented = true
+                    } label: {
+                        Label("Join a Circle", systemImage: "person.badge.plus")
+                    }
+                }
             }
             .sheet(isPresented: $viewModel.isComposerPresented, onDismiss: handleComposerDismiss) {
                 if let composerViewModel {
@@ -42,6 +49,9 @@ struct PetHomeView: View {
                         PostComposerView(viewModel: composerViewModel)
                     }
                 }
+            }
+            .sheet(isPresented: $viewModel.isJoinCirclePresented) {
+                JoinCircleView(viewModel: viewModel.makeJoinCircleViewModel())
             }
             .navigationDestination(for: UUID.self) { momentID in
                 if let postDetailViewModel = viewModel.makePostDetailViewModel(momentID: momentID) {

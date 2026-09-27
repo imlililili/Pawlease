@@ -63,17 +63,17 @@ final class CloudKitCircleSharingRepository: CircleSharingRepository, @unchecked
             let existingShares = try context.performAndWait {
                 try container.fetchShares(matching: [entity.objectID])
             }
-            if existingShares[entity.objectID] != nil {
+            if let existingShare = existingShares[entity.objectID] {
                 // Reuse rather than duplicate.
-                return PreparedCircleShare(circleID: circleID, isNewShare: false)
+                return PreparedCircleShare(circleID: circleID, isNewShare: false, shareURL: existingShare.url)
             }
 
             let (_, share, _) = try await container.share([entity], to: nil)
             share[CKShare.SystemFieldKey.title] = "Pawlease Circle" as CKRecordValue
             let ckContainer = CKContainer(identifier: PersistenceController.cloudKitContainerIdentifier)
-            _ = try await ckContainer.privateCloudDatabase.save(share)
+            let savedShare = try await ckContainer.privateCloudDatabase.save(share)
 
-            return PreparedCircleShare(circleID: circleID, isNewShare: true)
+            return PreparedCircleShare(circleID: circleID, isNewShare: true, shareURL: (savedShare as? CKShare)?.url)
         } catch let error as CircleSharingError {
             throw error
         } catch {
@@ -81,7 +81,8 @@ final class CloudKitCircleSharingRepository: CircleSharingRepository, @unchecked
         }
     }
 
-    func acceptPendingInvitation() async throws {
+    @discardableResult
+    func acceptPendingInvitation() async throws -> AcceptedCircleHandoff {
         guard let metadata = shareAcceptanceCoordinator.takePending() else {
             throw CircleSharingError.invitationAcceptanceFailed(message: "No pending invitation to accept.")
         }
@@ -104,6 +105,34 @@ final class CloudKitCircleSharingRepository: CircleSharingRepository, @unchecked
             }
         } catch {
             throw CircleSharingErrorMapping.map(error)
+        }
+
+        return AcceptedCircleHandoff(circleID: await resolveAcceptedCircleID(acceptedShareRecordID: metadata.share.recordID))
+    }
+
+    /// Resolves the just-accepted share to a local `CircleEntity` — the
+    /// smallest semantic handoff that avoids guessing. There is no public
+    /// `NSPersistentCloudKitContainer` API to go directly from a
+    /// `CKRecord.ID` to an `NSManagedObjectID`, so this instead checks each
+    /// locally known Circle's own share (via `fetchShares(matching:)`,
+    /// already used elsewhere in this file) for one whose `recordID`
+    /// matches the share that was just accepted. Returns `nil` — never a
+    /// guess — if no match is found (e.g. the shared store hasn't finished
+    /// merging the new Circle yet).
+    @MainActor
+    private func resolveAcceptedCircleID(acceptedShareRecordID: CKRecord.ID) -> UUID? {
+        let context = container.viewContext
+        return context.performAndWait {
+            guard let circles = try? context.fetch(CircleEntity.fetchRequest()) else { return nil }
+            for circle in circles {
+                guard let circleID = circle.id,
+                      let shares = try? container.fetchShares(matching: [circle.objectID]),
+                      let share = shares[circle.objectID],
+                      share.recordID == acceptedShareRecordID
+                else { continue }
+                return circleID
+            }
+            return nil
         }
     }
 

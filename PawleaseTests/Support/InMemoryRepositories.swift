@@ -8,6 +8,10 @@ final class InMemoryCircleRepository: CircleRepository, @unchecked Sendable {
         circle
     }
 
+    func fetchCircle(id: UUID) async throws -> FriendCircle? {
+        circle?.id == id ? circle : nil
+    }
+
     func saveCircle(_ circle: FriendCircle) async throws -> FriendCircle {
         self.circle = circle
         return circle
@@ -18,13 +22,37 @@ final class InMemoryMemberRepository: MemberRepository, @unchecked Sendable {
     var members: [CircleMember] = []
 
     func fetchMembers(circleID: UUID) async throws -> [CircleMember] {
-        members.filter { $0.circleID == circleID }
+        members
+            .filter { $0.circleID == circleID }
+            .sorted { $0.joinedAt == $1.joinedAt ? $0.profileID.uuidString < $1.profileID.uuidString : $0.joinedAt < $1.joinedAt }
     }
 
+    /// Mirrors `CoreDataMemberRepository.saveMember`'s upsert key — at most
+    /// one Member per `(circleID, profileID)`, never keyed on `member.id`
+    /// alone — so Application-layer tests against this double actually
+    /// exercise the same duplicate-prevention guarantee the real
+    /// repository provides.
+    @discardableResult
     func saveMember(_ member: CircleMember) async throws -> CircleMember {
-        members.removeAll { $0.id == member.id }
-        members.append(member)
+        if let index = members.firstIndex(where: { $0.circleID == member.circleID && $0.profileID == member.profileID }) {
+            members[index] = member
+        } else {
+            members.append(member)
+        }
         return member
+    }
+}
+
+final class InMemoryUserProfileRepository: UserProfileRepository, @unchecked Sendable {
+    var profile: UserProfile?
+    private(set) var fetchOrCreateCallCount = 0
+
+    func fetchOrCreateCurrentProfile() async throws -> UserProfile {
+        fetchOrCreateCallCount += 1
+        if let profile { return profile }
+        let created = UserProfile(id: UUID(), displayName: "You", avatarEmoji: "🦊", createdAt: Date())
+        profile = created
+        return created
     }
 }
 

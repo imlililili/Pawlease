@@ -13,5 +13,9 @@ protocol CircleSharingRepository: Sendable {
     func sharingState(circleID: UUID) async throws -> CircleSharingState
     @discardableResult
     func prepareShare(circleID: UUID) async throws -> PreparedCircleShare
-    func acceptPendingInvitation() async throws
+    /// Accepts whatever invitation is currently staged and returns the
+    /// smallest semantic handoff needed to locate which Circle was just
+    /// joined — see `AcceptedCircleHandoff`.
+    @discardableResult
+    func acceptPendingInvitation() async throws -> AcceptedCircleHandoff
 }

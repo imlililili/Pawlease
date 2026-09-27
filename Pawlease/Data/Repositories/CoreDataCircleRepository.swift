@@ -19,6 +19,17 @@ nonisolated final class CoreDataCircleRepository: CircleRepository, @unchecked S
         }
     }
 
+    func fetchCircle(id: UUID) async throws -> FriendCircle? {
+        let context = container.newBackgroundContext()
+        return try await context.perform {
+            let request = CircleEntity.fetchRequest()
+            request.predicate = NSPredicate(format: "id == %@", id as CVarArg)
+            request.fetchLimit = 1
+            guard let entity = try context.fetch(request).first else { return nil }
+            return CircleMapper.toDomain(entity)
+        }
+    }
+
     @discardableResult
     func saveCircle(_ circle: FriendCircle) async throws -> FriendCircle {
         let context = container.newBackgroundContext()

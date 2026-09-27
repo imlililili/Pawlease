@@ -10,4 +10,15 @@ struct PreparedCircleShare: Sendable, Equatable {
     /// existing share was reused. Lets the UI say "Invite friends" vs.
     /// "Manage invitation" without re-deriving that from CloudKit state.
     let isNewShare: Bool
+    /// The `CKShare`'s saved URL, if CloudKit has assigned one yet — `nil`
+    /// only in the rare case a share exists but hasn't finished saving.
+    /// `CreateCircleInviteCodeUseCase` requires this before publishing an
+    /// invite-code record.
+    let shareURL: URL?
+
+    init(circleID: UUID, isNewShare: Bool, shareURL: URL? = nil) {
+        self.circleID = circleID
+        self.isNewShare = isNewShare
+        self.shareURL = shareURL
+    }
 }
