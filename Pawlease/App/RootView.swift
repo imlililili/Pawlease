@@ -35,6 +35,8 @@ struct RootView: View {
                     loadPendingDraftsUseCase: dependencies.loadPendingDraftsUseCase,
                     loadPendingDraftImageUseCase: dependencies.loadPendingDraftImageUseCase,
                     consumePendingDraftUseCase: dependencies.consumePendingDraftUseCase,
+                    simulateFriendCheckInUseCase: dependencies.simulateFriendCheckInUseCase,
+                    cleanUpLegacyDemoFriendUseCase: dependencies.cleanUpLegacyDemoFriendUseCase,
                     clock: dependencies.clock
                 )
             )

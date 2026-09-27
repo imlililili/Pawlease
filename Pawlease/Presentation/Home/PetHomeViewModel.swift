@@ -14,17 +14,44 @@ final class PetHomeViewModel {
         case error(String)
     }
 
+    /// State for the Debug-only "Simulate Friend Check-in" control. Whether
+    /// the demo friend has *already* checked in today is deliberately not
+    /// tracked here as separate mutable state — it's derived from
+    /// `todayMoments` (see `hasDemoFriendCheckedInToday`), which `refresh()`
+    /// already reloads from persisted posts, so it survives view reloads
+    /// and app relaunches without needing its own persistence.
+    enum DemoCheckInState: Equatable {
+        case idle
+        case checkingIn
+        case error(String)
+    }
+
     private(set) var loadState: LoadState = .idle
     private(set) var snapshot: PetHomeSnapshot?
     private(set) var todayMoments: [DailyMoment] = []
     private(set) var feedError: String?
     private(set) var syncStatus: CircleSyncStatus = .localChangesSaved
     private(set) var pendingSharedDraft: PendingPostDraft?
+    private(set) var demoCheckInState: DemoCheckInState = .idle
     var isComposerPresented = false
     var isJoinCirclePresented = false
 
     var viewState: PetHomeViewState? {
         snapshot.map(PetHomeViewState.init)
+    }
+
+    /// Whether the Debug-only demo friend has already posted for today's
+    /// Circle day — derived from the same `todayMoments` the real feed
+    /// shows, never a separately tracked flag.
+    var hasDemoFriendCheckedInToday: Bool {
+        todayMoments.contains { $0.authorProfileID == DemoSeed.avaProfileID }
+    }
+
+    /// The button is disabled until the current user has posted today —
+    /// mirroring the same rule the Use Case itself enforces — and while a
+    /// simulation is already in flight.
+    var canSimulateFriendCheckIn: Bool {
+        (snapshot?.hasCurrentMemberPosted ?? false) && demoCheckInState != .checkingIn
     }
 
     private let loadPetHomeUseCase: LoadPetHomeUseCase
@@ -54,6 +81,8 @@ final class PetHomeViewModel {
     private let loadPendingDraftsUseCase: LoadPendingDraftsUseCase
     private let loadPendingDraftImageUseCase: LoadPendingDraftImageUseCase
     private let consumePendingDraftUseCase: ConsumePendingDraftUseCase
+    private let simulateFriendCheckInUseCase: SimulateFriendCheckInUseCase
+    private let cleanUpLegacyDemoFriendUseCase: CleanUpLegacyDemoFriendUseCase
     private let clock: ClockProviding
     /// Held only to forward to `CircleSettingsView` when constructed — this
     /// ViewModel never calls CloudKit APIs on it directly.
@@ -98,6 +127,8 @@ final class PetHomeViewModel {
         loadPendingDraftsUseCase: LoadPendingDraftsUseCase,
         loadPendingDraftImageUseCase: LoadPendingDraftImageUseCase,
         consumePendingDraftUseCase: ConsumePendingDraftUseCase,
+        simulateFriendCheckInUseCase: SimulateFriendCheckInUseCase,
+        cleanUpLegacyDemoFriendUseCase: CleanUpLegacyDemoFriendUseCase,
         clock: ClockProviding
     ) {
         self.loadPetHomeUseCase = loadPetHomeUseCase
@@ -128,6 +159,8 @@ final class PetHomeViewModel {
         self.loadPendingDraftsUseCase = loadPendingDraftsUseCase
         self.loadPendingDraftImageUseCase = loadPendingDraftImageUseCase
         self.consumePendingDraftUseCase = consumePendingDraftUseCase
+        self.simulateFriendCheckInUseCase = simulateFriendCheckInUseCase
+        self.cleanUpLegacyDemoFriendUseCase = cleanUpLegacyDemoFriendUseCase
         self.clock = clock
     }
 
@@ -172,7 +205,14 @@ final class PetHomeViewModel {
     private func performRefresh() async {
         loadState = .loading
         do {
-            _ = try await seedDemoCircleUseCase.execute()
+            let seedResult = try await seedDemoCircleUseCase.execute()
+            #if DEBUG
+            // Narrowly-scoped, Debug-only cleanup for a known legacy bug
+            // (see `CleanUpLegacyDemoFriendUseCase`) — never affects a real
+            // member or any profile ID other than the one exact legacy ID.
+            // Best-effort: a failure here never blocks the rest of refresh.
+            try? await cleanUpLegacyDemoFriendUseCase.execute(circleID: seedResult.circle.id)
+            #endif
             let snapshot = try await loadPetHomeUseCase.execute()
             self.snapshot = snapshot
             await publishWidgetSnapshotUseCase.execute(from: snapshot)
@@ -200,6 +240,36 @@ final class PetHomeViewModel {
             loadState = .loaded
         } catch {
             loadState = .error(Self.message(for: error))
+        }
+    }
+
+    /// Debug-only: runs `SimulateFriendCheckInUseCase` and reacts to its
+    /// semantic result. Holds no business rules itself — the Use Case
+    /// decides whether the current user has posted, whether the demo
+    /// friend already checked in, and what "unavailable" means; this
+    /// method only maps that result onto UI state and, after a genuinely
+    /// new post, calls the existing refresh flow (which recalculates
+    /// survival from persisted posts and republishes the Widget snapshot,
+    /// exactly like any other post).
+    func simulateFriendCheckIn() async {
+        guard let snapshot else { return }
+        demoCheckInState = .checkingIn
+        do {
+            let result = try await simulateFriendCheckInUseCase.execute(
+                circle: snapshot.circle,
+                currentMember: snapshot.currentMember
+            )
+            switch result {
+            case .created:
+                demoCheckInState = .idle
+                await refresh()
+            case .alreadyCheckedIn:
+                demoCheckInState = .idle
+            case .unavailable(let reason):
+                demoCheckInState = .error(reason)
+            }
+        } catch {
+            demoCheckInState = .error("We couldn't simulate Ava's check-in. Please try again.")
         }
     }
 
