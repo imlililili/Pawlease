@@ -63,6 +63,21 @@ nonisolated final class CoreDataMomentRepository: MomentRepository, @unchecked S
         }
     }
 
+    func deleteMoments(circleID: UUID, authorProfileID: UUID) async throws {
+        let context = container.newBackgroundContext()
+        try await context.perform {
+            let request = DailyPostEntity.fetchRequest()
+            request.predicate = NSPredicate(
+                format: "circle.id == %@ AND authorProfileID == %@",
+                circleID as CVarArg, authorProfileID as CVarArg
+            )
+            let entities = try context.fetch(request)
+            guard !entities.isEmpty else { return }
+            for entity in entities { context.delete(entity) }
+            try context.save()
+        }
+    }
+
     private func fetchMoments(circleID: UUID, dayValues: [String]) async throws -> [DailyMoment] {
         let context = container.newBackgroundContext()
         return try await context.perform {

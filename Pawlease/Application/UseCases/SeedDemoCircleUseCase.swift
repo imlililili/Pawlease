@@ -14,6 +14,15 @@ enum DemoSeed {
 
     /// The profile ID Phase 1 treats as "the current member" on this device.
     static let currentProfileID = memberProfileIDs[0]
+
+    /// The single source of truth for the seeded "Ava" member's identity.
+    /// Any other workflow that needs to act as "Ava" (e.g.
+    /// `SimulateFriendCheckInUseCase`) must reuse these — never mint a
+    /// second, unseeded profile ID for the same name, which would show up
+    /// in Circle Settings as a confusing duplicate-looking row.
+    static let avaProfileID = memberProfileIDs[1]
+    static let avaDisplayName = memberNames[1]
+    static let avaAvatarEmoji = memberEmojis[1]
 }
 
 /// Seeds one local demo Circle with three members and one pet, if none

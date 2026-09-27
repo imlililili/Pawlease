@@ -14,11 +14,20 @@ final class MockMomentRepository: MomentRepository, @unchecked Sendable {
     var fetchMomentsByDayResult: [DailyMoment] = []
     var fetchMomentsByDaysResult: [DailyMoment] = []
     var hasMemberPostedResult = false
+    /// Overrides `hasMemberPostedResult` when set — lets a test distinguish
+    /// between two different profile IDs (e.g. "the current member has
+    /// posted, but the demo friend hasn't") instead of one flat answer for
+    /// every call.
+    var hasMemberPostedHandler: ((_ circleID: UUID, _ profileID: UUID, _ day: CircleDay) -> Bool)?
 
     var saveMomentResult: DailyMoment?
     var saveMomentError: Error?
     private(set) var saveMomentCallCount = 0
     private(set) var savedMoments: [DailyMoment] = []
+
+    var deleteMomentsError: Error?
+    private(set) var deleteMomentsCallCount = 0
+    private(set) var deleteMomentsCapturedArgs: [(circleID: UUID, authorProfileID: UUID)] = []
 
     func fetchMoment(id: UUID) async throws -> DailyMoment? {
         fetchMomentCallCount += 1
@@ -36,7 +45,10 @@ final class MockMomentRepository: MomentRepository, @unchecked Sendable {
     }
 
     func hasMemberPosted(circleID: UUID, profileID: UUID, day: CircleDay) async throws -> Bool {
-        hasMemberPostedResult
+        if let hasMemberPostedHandler {
+            return hasMemberPostedHandler(circleID, profileID, day)
+        }
+        return hasMemberPostedResult
     }
 
     @discardableResult
@@ -45,5 +57,11 @@ final class MockMomentRepository: MomentRepository, @unchecked Sendable {
         savedMoments.append(moment)
         if let saveMomentError { throw saveMomentError }
         return saveMomentResult ?? moment
+    }
+
+    func deleteMoments(circleID: UUID, authorProfileID: UUID) async throws {
+        deleteMomentsCallCount += 1
+        deleteMomentsCapturedArgs.append((circleID, authorProfileID))
+        if let deleteMomentsError { throw deleteMomentsError }
     }
 }

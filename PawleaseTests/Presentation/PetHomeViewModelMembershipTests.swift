@@ -31,6 +31,8 @@ struct PetHomeViewModelMembershipTests {
         let prepareInvitationUseCase = PrepareCircleInvitationUseCase(
             cloudAccountStatusProvider: accountProvider, circleSharingRepository: sharingRepo
         )
+        let publishDailyMomentUseCase = PublishDailyMomentUseCase(momentRepository: momentRepo, clock: clock)
+        let photoProcessingService = PhotoProcessingService()
 
         return PetHomeViewModel(
             loadPetHomeUseCase: loadPetHomeUseCase,
@@ -38,8 +40,8 @@ struct PetHomeViewModelMembershipTests {
             seedDemoCircleUseCase: SeedDemoCircleUseCase(
                 circleRepository: circleRepo, memberRepository: memberRepo, petRepository: petRepo, clock: clock
             ),
-            publishDailyMomentUseCase: PublishDailyMomentUseCase(momentRepository: momentRepo, clock: clock),
-            photoProcessingService: PhotoProcessingService(),
+            publishDailyMomentUseCase: publishDailyMomentUseCase,
+            photoProcessingService: photoProcessingService,
             loadMomentDetailUseCase: LoadMomentDetailUseCase(
                 momentRepository: momentRepo,
                 commentRepository: MockCommentRepository(),
@@ -74,6 +76,18 @@ struct PetHomeViewModelMembershipTests {
             loadPendingDraftsUseCase: LoadPendingDraftsUseCase(pendingPostDraftRepository: pendingDraftRepo),
             loadPendingDraftImageUseCase: LoadPendingDraftImageUseCase(shareInboxStore: shareInboxStore),
             consumePendingDraftUseCase: ConsumePendingDraftUseCase(pendingPostDraftRepository: pendingDraftRepo, shareInboxStore: shareInboxStore),
+            simulateFriendCheckInUseCase: SimulateFriendCheckInUseCase(
+                memberRepository: memberRepo,
+                momentRepository: momentRepo,
+                publishDailyMomentUseCase: publishDailyMomentUseCase,
+                photoProcessingService: photoProcessingService,
+                demoImageProvider: MockDemoCheckInImageProvider(),
+                clock: clock
+            ),
+            cleanUpLegacyDemoFriendUseCase: CleanUpLegacyDemoFriendUseCase(
+                memberRepository: memberRepo,
+                momentRepository: momentRepo
+            ),
             clock: clock
         )
     }
@@ -98,5 +112,40 @@ struct PetHomeViewModelMembershipTests {
         let members = try await memberRepo.fetchMembers(circleID: DemoSeed.circleID)
         #expect(members.count == 3)
         #expect(Set(members.map(\.profileID)) == Set(DemoSeed.memberProfileIDs))
+    }
+
+    /// Reproduces the exact reported bug — Circle Settings showing "You,
+    /// Ava, Noah, Ava" — by seeding a store that already has a legacy
+    /// `CleanUpLegacyDemoFriendUseCase.legacyAvaProfileID` row alongside
+    /// the normal three seeded members, then proving a single `refresh()`
+    /// leaves exactly the three seeded members (Debug-only cleanup runs
+    /// inside `performRefresh()`).
+    @Test
+    func refreshCleansUpAPreExistingLegacyAvaRow() async throws {
+        let persistence = PersistenceController(mode: .inMemory)
+        let clock = SystemClock()
+        let memberRepo = CoreDataMemberRepository(container: persistence.container)
+        let circleRepo = CoreDataCircleRepository(container: persistence.container)
+        let petRepo = CoreDataPetRepository(container: persistence.container)
+
+        // Seed the normal Circle first, then simulate the historical bug:
+        // a fourth member under the legacy, unseeded "Ava" profile ID.
+        _ = try await SeedDemoCircleUseCase(
+            circleRepository: circleRepo, memberRepository: memberRepo, petRepository: petRepo, clock: clock
+        ).execute()
+        try await memberRepo.saveMember(CircleMember(
+            id: UUID(), circleID: DemoSeed.circleID, profileID: CleanUpLegacyDemoFriendUseCase.legacyAvaProfileID,
+            displayName: "Ava", avatarEmoji: "🌼", joinedAt: clock.now, role: .member
+        ))
+        let beforeCleanup = try await memberRepo.fetchMembers(circleID: DemoSeed.circleID)
+        #expect(beforeCleanup.count == 4) // reproduces "You, Ava, Noah, Ava"
+
+        let viewModel = makeViewModel(container: persistence, clock: clock)
+        await viewModel.refresh()
+
+        let members = try await memberRepo.fetchMembers(circleID: DemoSeed.circleID)
+        #expect(members.count == 3)
+        #expect(Set(members.map(\.profileID)) == Set(DemoSeed.memberProfileIDs))
+        #expect(!members.contains { $0.profileID == CleanUpLegacyDemoFriendUseCase.legacyAvaProfileID })
     }
 }

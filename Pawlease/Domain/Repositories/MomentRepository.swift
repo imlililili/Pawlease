@@ -10,4 +10,8 @@ protocol MomentRepository: Sendable {
     func hasMemberPosted(circleID: UUID, profileID: UUID, day: CircleDay) async throws -> Bool
     @discardableResult
     func saveMoment(_ moment: DailyMoment) async throws -> DailyMoment
+    /// Deletes every moment authored by this exact `(circleID,
+    /// authorProfileID)` pair. A no-op if none match. Deliberately narrow —
+    /// see `CleanUpLegacyDemoFriendUseCase` for its one intended caller.
+    func deleteMoments(circleID: UUID, authorProfileID: UUID) async throws
 }

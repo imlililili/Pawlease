@@ -110,6 +110,10 @@ struct PetHomeView: View {
                 .controlSize(.large)
                 .accessibilityHint("Opens the photo picker so you can share today's moment.")
 
+                #if DEBUG
+                localCollaborationDemoSection
+                #endif
+
                 feedSection(state: state)
             }
             .padding()
@@ -145,6 +149,63 @@ struct PetHomeView: View {
         .accessibilityLabel("Shared photo ready")
         .accessibilityHint("Opens the composer with your shared photo so you can finish posting it.")
     }
+
+    #if DEBUG
+    /// Debug-only: simulates a second local Circle member posting, so the
+    /// portfolio demo can show 2/2 and a survived day without a second
+    /// physical device or CloudKit. Hidden entirely from Release builds —
+    /// this whole property only exists in a `#if DEBUG` build.
+    private var localCollaborationDemoSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 6) {
+                Text("Local Demo")
+                    .font(.caption.bold())
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(Color.orange.opacity(0.2), in: Capsule())
+                    .foregroundStyle(.orange)
+                Spacer()
+            }
+
+            if viewModel.hasDemoFriendCheckedInToday {
+                Label("Ava checked in today", systemImage: "checkmark.circle.fill")
+                    .font(.subheadline)
+                    .foregroundStyle(.green)
+            } else {
+                Button {
+                    Task { await viewModel.simulateFriendCheckIn() }
+                } label: {
+                    if viewModel.demoCheckInState == .checkingIn {
+                        HStack {
+                            ProgressView()
+                            Text("Simulating Ava's Check-in…")
+                        }
+                        .frame(maxWidth: .infinity)
+                    } else {
+                        Text("Simulate Ava's Check-in")
+                            .frame(maxWidth: .infinity)
+                    }
+                }
+                .buttonStyle(.bordered)
+                .disabled(!viewModel.canSimulateFriendCheckIn)
+                .accessibilityHint("Publishes a local post from a simulated second Circle member, Ava.")
+
+                if case .error(let message) = viewModel.demoCheckInState {
+                    Text(message)
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                }
+            }
+
+            Text("Simulates a second local member because CloudKit provisioning is unavailable in this environment.")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+        }
+        .padding()
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+    }
+    #endif
 
     @ViewBuilder
     private func feedSection(state: PetHomeViewState) -> some View {

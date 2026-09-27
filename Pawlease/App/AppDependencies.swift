@@ -62,6 +62,15 @@ final class AppDependencies {
     let loadPendingDraftsUseCase: LoadPendingDraftsUseCase
     let loadPendingDraftImageUseCase: LoadPendingDraftImageUseCase
     let consumePendingDraftUseCase: ConsumePendingDraftUseCase
+    /// Debug-only demo workflow — see `SimulateFriendCheckInUseCase`. Always
+    /// constructed (so `PetHomeViewModel`'s shape stays stable across
+    /// configurations); `PetHomeView` gates the UI entry point behind
+    /// `#if DEBUG`, so this never runs in a Release build.
+    let simulateFriendCheckInUseCase: SimulateFriendCheckInUseCase
+    /// Debug-only — see `CleanUpLegacyDemoFriendUseCase`. Always
+    /// constructed like `simulateFriendCheckInUseCase`; only its call site
+    /// in `PetHomeViewModel.performRefresh()` is `#if DEBUG`-gated.
+    let cleanUpLegacyDemoFriendUseCase: CleanUpLegacyDemoFriendUseCase
 
     init(
         persistenceController: PersistenceController,
@@ -198,6 +207,18 @@ final class AppDependencies {
         self.consumePendingDraftUseCase = ConsumePendingDraftUseCase(
             pendingPostDraftRepository: pendingDraftRepo,
             shareInboxStore: self.shareInboxStore
+        )
+        self.simulateFriendCheckInUseCase = SimulateFriendCheckInUseCase(
+            memberRepository: memberRepo,
+            momentRepository: momentRepo,
+            publishDailyMomentUseCase: self.publishDailyMomentUseCase,
+            photoProcessingService: self.photoProcessingService,
+            demoImageProvider: BundledDemoCheckInImageProvider(),
+            clock: clock
+        )
+        self.cleanUpLegacyDemoFriendUseCase = CleanUpLegacyDemoFriendUseCase(
+            memberRepository: memberRepo,
+            momentRepository: momentRepo
         )
     }
 

@@ -107,4 +107,19 @@ nonisolated final class CoreDataMemberRepository: MemberRepository, @unchecked S
             return MemberMapper.toDomain(entity)
         }
     }
+
+    func deleteMember(circleID: UUID, profileID: UUID) async throws {
+        let context = container.newBackgroundContext()
+        try await context.perform {
+            let request = MemberEntity.fetchRequest()
+            request.predicate = NSPredicate(
+                format: "circle.id == %@ AND profileID == %@",
+                circleID as CVarArg, profileID as CVarArg
+            )
+            let entities = try context.fetch(request)
+            guard !entities.isEmpty else { return }
+            for entity in entities { context.delete(entity) }
+            try context.save()
+        }
+    }
 }
