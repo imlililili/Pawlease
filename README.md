@@ -531,7 +531,7 @@ share an App Group container with the main app for lightweight state:
   the Share Extension for the main app to pick up, review, and publish.
 
 Not yet configured as an actual entitlement — that's deferred to the phase
-that actually adds the Widget/Share Extension targets (see §21), since an
+that actually adds the Widget/Share Extension targets (see §22), since an
 App Group entitlement with no extension target to justify it would just add
 an unused capability to provision.
 
@@ -666,7 +666,60 @@ Until this procedure is actually run and its outcome recorded, treat the
 invite-code workflow as **implemented and unit-tested, but not verified
 end-to-end against real public CloudKit or a second iCloud account**.
 
-## 18. Known limitations
+## 18. Local Collaboration Demo
+
+Real two-device CloudKit collaboration (§17) needs two iCloud accounts and
+provisioning this environment doesn't have (see §13's Personal Team
+limitation). To let the portfolio demo still show the Circle actually
+surviving a day — `2/2` contributors, not just `1/2` — Pet Home has a
+**Debug-only** "Simulate Ava's Check-in" control.
+
+**What it is:**
+
+- **Available only in Debug builds.** The entire section is wrapped in
+  `#if DEBUG` in `PetHomeView.swift` and is compiled out of Release
+  entirely — not just hidden at runtime. Verified by grepping the compiled
+  Release binary's strings for the button's label, which finds zero
+  matches.
+- **Does not use or impersonate CloudKit.** `SimulateFriendCheckInUseCase`
+  never imports or calls `CloudKit`/`CKContainer`/`CKShare` — it only calls
+  `MemberRepository` and `MomentRepository`, the exact same repositories
+  real posting uses. Whatever CloudKit sync those repositories already do
+  for a real post (via `NSPersistentCloudKitContainer`) happens the same
+  way here — nothing about this feature bypasses or fakes that.
+- **Creates a real local second-member post.** Tapping the button publishes
+  one genuine `DailyMoment` — through `PublishDailyMomentUseCase`, the same
+  Use Case the real Post Composer uses — authored by a stable, fixed-UUID
+  demo Circle member ("Ava", 🌼), distinct from the real seeded "Ava" 🐼
+  placeholder already in the Circle roster and from `DemoSeed`'s other
+  members. The demo image is a small, app-created illustration (an
+  original flower drawing, `Assets.xcassets/DemoCheckInPhoto` — not a
+  photo of any real person or a third-party asset), processed through the
+  same `PhotoProcessingService` pipeline (orientation-normalized, ~1200px
+  main image, ~300px thumbnail, JPEG ~0.7 quality) real photos go through.
+- **Survival is still derived from distinct persisted contributor IDs.**
+  Nothing about this feature changes `CalculateDailyCareStatusUseCase
+  .requiredContributorCount` (still 2), mutates a contributor counter
+  (there isn't one), or sets the pet's activity state directly. `2/2` and
+  "survived" appear only because `CalculateDailyCareStatusUseCase`
+  recalculates them from two distinct `authorProfileID`s among that day's
+  persisted `DailyMoment`s — exactly the same recalculation a real second
+  device's post would trigger.
+- **Membership is idempotent and capped.** The demo friend is added to the
+  Circle's roster (if not already present) using the same one-member-per-
+  profile-ID check any membership addition should use, matched by profile
+  ID — never by display name, since a real person could legitimately share
+  the name "Ava." The Circle's 5-member cap applies to her too.
+- **Real two-account CKShare verification remains pending** because of
+  Personal Team provisioning (§13, §17) — this demo does not substitute
+  for that; it only lets the *local* survival/contributor-count logic be
+  demonstrated without it.
+
+See `Application/UseCases/SimulateFriendCheckInUseCase.swift` for the full
+Use Case and `PawleaseTests/Application/SimulateFriendCheckInUseCaseTests.swift`
+for its mock-based test coverage.
+
+## 19. Known limitations
 
 - **Two-device CloudKit sharing has not been manually verified** — see §17.
 - **Provisioning is incomplete** — the iCloud/Push/Background Modes
@@ -700,9 +753,9 @@ end-to-end against real public CloudKit or a second iCloud account**.
   explicit retry (e.g. on the next Circle Settings load) rather than relying
   on a single best-effort attempt.
 - Widget, Share Extension, memory calendar, and final pet artwork remain
-  unimplemented — see §21.
+  unimplemented — see §22.
 
-## 19. Privacy explanation
+## 20. Privacy explanation
 
 Pawlease stores Circle data (moments, comments, reactions, membership) in
 Apple's CloudKit **private** and **shared** databases only. The one
@@ -720,7 +773,7 @@ storage, mirrored through the same private/shared CloudKit zones as
 everything else — no separate media hosting service is used. No analytics,
 tracking, or third-party SDKs are present anywhere in the project.
 
-## 20. Current implementation status
+## 21. Current implementation status
 
 **Implemented:**
 
@@ -751,9 +804,9 @@ tracking, or third-party SDKs are present anywhere in the project.
 
 **Not yet done:** the manual Developer Portal capability registration and
 the two-device manual verification (§13, §17); the Widget extension, Share
-Extension, memory calendar, and final pet artwork — see §21.
+Extension, memory calendar, and final pet artwork — see §22.
 
-## 21. Planned features
+## 22. Planned features
 
 - **`feature/pet-widget`** — PawleaseWidget: current pet state, `1/2`
   contributor progress, whether the current member has posted, deep-link to
