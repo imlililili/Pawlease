@@ -6,7 +6,8 @@
 
 Pawlease is a private social app for a group of two to five close friends who
 jointly care for one shared virtual pet. Each day, a member publishes one
-photo moment; once they've shared their own moment, their friends' moments
+photo Moment, taken with the in-app camera or selected from Photos; once
+they've shared their own Moment, their friends' Moments
 for that day unlock. When at least two distinct members publish, the pet
 survives the day and the group's streak continues. Missing a day never kills
 the pet or deletes its history — it just puts the pet in a resting state
@@ -68,7 +69,8 @@ intervention for loneliness or mental health.
    day. Multiple posts from the same member still count as one contributor.
 5. Missing a day resets the current streak but never deletes pet growth or
    past memories, and the pet is never permanently deleted.
-6. Captions and comments are limited to 60 characters.
+6. A Moment must contain a photo. Its caption is optional and limited to 60
+   characters; comments are required text and limited to 60 characters.
 7. Comments are single-level (no nested replies) and cannot be edited —
    only soft-deleted by their own author. A removed comment keeps its id,
    author, and timestamp, and displays as "Comment removed."
@@ -94,8 +96,9 @@ Presentation → Application → Domain ← Data
   repository protocols, and domain errors. Imports only `Foundation`.
 - **Data** — Core Data repository implementations and mappers that convert
   between `NSManagedObject` subclasses and Domain structs.
-- **Infrastructure** — platform-facing helpers (a clock abstraction, photo
-  processing) that sit alongside Data but are consumed by Presentation.
+- **Infrastructure** — platform-facing helpers (a clock abstraction, native
+  AVFoundation camera capture, photo processing) that sit alongside Data but
+  are consumed by Presentation.
 
 The Domain layer never imports SwiftUI, UIKit, Core Data, CloudKit, or
 WidgetKit. The Presentation layer never imports Core Data or touches
@@ -153,10 +156,11 @@ terminology:
 `CommentBody`, `MomentPhoto`, `ReactionEmoji`, `DailyCareStatus`,
 `PetLifeStage`, `PetActivityState`.
 
-Value objects validate themselves at construction (e.g. `MomentCaption` and
-`CommentBody` both reject empty or >60-character text by throwing
-`DomainValidationError`), so an invalid comment or caption is
-unrepresentable once constructed. `ReactionEmoji` is a closed `enum` over
+Value objects validate themselves at construction. `MomentCaption` accepts
+an empty value (the photo is the required Moment content) but rejects more
+than 60 characters; `CommentBody` rejects empty or >60-character text. An
+invalid value is therefore unrepresentable once constructed. `ReactionEmoji`
+is a closed `enum` over
 the five supported emoji rather than an arbitrary `String`, so an
 unsupported reaction cannot be expressed at all.
 
@@ -197,8 +201,8 @@ both.
 
 - Accepts a photo, URL, or text shared from another app.
 - Creates a pending Pawlease draft instead of publishing directly.
-- Opens the main app so the member can review the photo, add a caption and
-  mood, and publish deliberately.
+- Opens the main app so the member can review the photo, optionally add a
+  caption, and publish deliberately.
 - **Why:** people already have the photo they want to share open in Photos,
   Safari, or another app. Without a share extension they'd have to save the
   item, switch to Pawlease, and find it again — extra steps that work
@@ -721,6 +725,11 @@ for its mock-based test coverage.
 
 ## 19. Known limitations
 
+- **Camera capture requires a physical device.** iOS Simulator has no camera
+  hardware. The composer presents an explicit unavailable state there while
+  keeping PhotosPicker usable; permission, front/back switching, capture,
+  orientation normalization, and image quality must also be manually checked
+  on an iPhone before release.
 - **Two-device CloudKit sharing has not been manually verified** — see §17.
 - **Provisioning is incomplete** — the iCloud/Push/Background Modes
   capabilities are configured in code but not yet registered against the

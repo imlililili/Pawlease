@@ -82,16 +82,15 @@ struct PostDetailView: View {
             HStack {
                 Text(state.authorName)
                     .font(.headline)
-                if let mood = state.moodEmoji {
-                    Text(mood)
-                }
                 Spacer()
                 Text(state.createdAt, style: .time)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
-            Text(state.caption)
-                .font(.body)
+            if !state.caption.isEmpty {
+                Text(state.caption)
+                    .font(.body)
+            }
         }
         .accessibilityElement(children: .combine)
     }

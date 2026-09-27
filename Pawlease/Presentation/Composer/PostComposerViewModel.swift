@@ -3,9 +3,8 @@ import Observation
 import PhotosUI
 import SwiftUI
 
-/// Coordinates the Post Composer workflow: photo selection and preview,
-/// caption entry with a live character count, optional mood, and
-/// publishing via `PublishDailyMomentUseCase`.
+/// Coordinates Moment composition from either the camera or PhotosPicker and
+/// publishes through `PublishDailyMomentUseCase`.
 @MainActor
 @Observable
 final class PostComposerViewModel {
@@ -15,7 +14,6 @@ final class PostComposerViewModel {
         case error(String)
     }
 
-    let moodOptions = ["😀", "😐", "😴", "🥳", "😭", "😎"]
     let characterLimit = MomentCaption.maxLength
 
     var selectedItem: PhotosPickerItem? {
@@ -31,8 +29,6 @@ final class PostComposerViewModel {
             }
         }
     }
-    var selectedMood: String?
-
     private(set) var publishState: PublishState = .idle
     private(set) var didPublish = false
 
@@ -90,13 +86,24 @@ final class PostComposerViewModel {
         guard let selectedItem else { return }
         do {
             guard let data = try await selectedItem.loadTransferable(type: Data.self) else { return }
-            rawImageData = data
-            if let uiImage = UIImage(data: data) {
-                previewImage = Image(uiImage: uiImage)
-            }
+            setPhotoData(data)
         } catch {
             publishState = .error("Couldn't load that photo. Please try another one.")
         }
+    }
+
+    func setCapturedPhotoData(_ data: Data) {
+        setPhotoData(data)
+    }
+
+    private func setPhotoData(_ data: Data) {
+        guard let uiImage = UIImage(data: data) else {
+            publishState = .error("That photo couldn't be loaded. Please try again.")
+            return
+        }
+        rawImageData = data
+        previewImage = Image(uiImage: uiImage)
+        publishState = .idle
     }
 
     func publish() async {
@@ -112,8 +119,7 @@ final class PostComposerViewModel {
                 circle: circle,
                 member: member,
                 photo: photo,
-                captionText: captionText,
-                moodEmoji: selectedMood
+                captionText: captionText
             )
             didPublish = true
             publishState = .idle
@@ -131,7 +137,7 @@ final class PostComposerViewModel {
     private static func message(for error: DomainValidationError) -> String {
         switch error {
         case .captionTooLong: return "Captions must be 60 characters or fewer."
-        case .captionEmpty: return "Please add a short caption."
+        case .captionEmpty: return "Captions are optional."
         case .emptyPhotoData: return "That photo couldn't be processed. Please try another one."
         case .commentTooLong, .commentEmpty, .invalidReactionEmoji:
             return "Something went wrong. Please try again."

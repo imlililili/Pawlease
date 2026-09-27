@@ -108,7 +108,7 @@ struct PetHomeView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
-                .accessibilityHint("Opens the photo picker so you can share today's moment.")
+                .accessibilityHint("Opens the Moment composer to take a photo or choose one from your library.")
 
                 #if DEBUG
                 localCollaborationDemoSection

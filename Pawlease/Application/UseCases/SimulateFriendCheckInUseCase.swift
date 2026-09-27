@@ -25,7 +25,6 @@ struct SimulateFriendCheckInUseCase: Sendable {
     /// member and can never drift onto a second, unseeded "Ava" profile.
     enum CheckInContent {
         static let caption = "Ava checked in 🌼"
-        static let moodEmoji = "🥳"
     }
 
     /// A Circle's member roster is capped — ensuring the demo friend can
@@ -77,8 +76,7 @@ struct SimulateFriendCheckInUseCase: Sendable {
             circle: circle,
             member: demoFriendMember,
             photo: photo,
-            captionText: CheckInContent.caption,
-            moodEmoji: CheckInContent.moodEmoji
+            captionText: CheckInContent.caption
         )
         return .created(moment)
     }

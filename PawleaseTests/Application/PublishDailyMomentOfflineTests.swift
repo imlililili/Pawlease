@@ -20,7 +20,7 @@ struct PublishDailyMomentOfflineTests {
         let photo = try MomentPhoto(imageData: Data([0xFF]), thumbnailData: Data([0xFF]))
 
         let published = try await useCase.execute(
-            circle: circle, member: member, photo: photo, captionText: "Offline post", moodEmoji: nil
+            circle: circle, member: member, photo: photo, captionText: "Offline post"
         )
 
         let day = CircleDay(date: clock.now, timeZoneIdentifier: circle.timezoneIdentifier)

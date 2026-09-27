@@ -3,6 +3,7 @@ import SwiftUI
 
 struct PostComposerView: View {
     @State private var viewModel: PostComposerViewModel
+    @State private var isCameraPresented = false
     @Environment(\.dismiss) private var dismiss
 
     init(viewModel: PostComposerViewModel) {
@@ -12,16 +13,29 @@ struct PostComposerView: View {
     var body: some View {
         Form {
             Section {
-                PhotosPicker(selection: $viewModel.selectedItem, matching: .images) {
-                    photoPreview
+                photoPreview
+
+                HStack {
+                    Button {
+                        isCameraPresented = true
+                    } label: {
+                        Label("Take Photo", systemImage: "camera.fill")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.borderedProminent)
+
+                    PhotosPicker(selection: $viewModel.selectedItem, matching: .images) {
+                        Label("Photo Library", systemImage: "photo.on.rectangle")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
                 }
-                .accessibilityLabel(viewModel.previewImage == nil ? "Choose a photo" : "Change photo")
             }
 
             Section {
-                TextField("What's happening today?", text: $viewModel.captionText, axis: .vertical)
+                TextField("Add a caption (optional)", text: $viewModel.captionText, axis: .vertical)
                     .lineLimit(2...4)
-                    .accessibilityLabel("Caption")
+                    .accessibilityLabel("Optional caption")
                 HStack {
                     Spacer()
                     Text(viewModel.viewState.characterCountLabel)
@@ -29,13 +43,7 @@ struct PostComposerView: View {
                         .foregroundStyle(viewModel.viewState.isCaptionValid ? Color.secondary : Color.red)
                         .accessibilityLabel("\(viewModel.viewState.characterCountLabel) characters used")
                 }
-            } header: {
-                Text("Caption")
-            }
-
-            Section("Mood (optional)") {
-                MoodPicker(options: viewModel.moodOptions, selection: $viewModel.selectedMood)
-            }
+            } header: { Text("Caption (optional)") }
 
             if case .error(let message) = viewModel.publishState {
                 Section {
@@ -63,7 +71,12 @@ struct PostComposerView: View {
                     }
                 }
                 .disabled(!viewModel.canPublish)
-                .accessibilityHint(viewModel.canPublish ? "" : "Add a photo and a caption to publish")
+                .accessibilityHint(viewModel.canPublish ? "" : "Add a photo to publish")
+            }
+        }
+        .fullScreenCover(isPresented: $isCameraPresented) {
+            MomentCameraView { data in
+                viewModel.setCapturedPhotoData(data)
             }
         }
     }
@@ -78,35 +91,9 @@ struct PostComposerView: View {
                 .frame(maxWidth: .infinity)
                 .clipShape(RoundedRectangle(cornerRadius: 16))
         } else {
-            ContentUnavailableView("Select a Photo", systemImage: "photo.badge.plus")
+            ContentUnavailableView("Add Today's Photo", systemImage: "camera.fill")
                 .frame(height: 220)
                 .frame(maxWidth: .infinity)
-        }
-    }
-}
-
-private struct MoodPicker: View {
-    let options: [String]
-    @Binding var selection: String?
-
-    var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 12) {
-                ForEach(options, id: \.self) { emoji in
-                    Button {
-                        selection = (selection == emoji) ? nil : emoji
-                    } label: {
-                        Text(emoji)
-                            .font(.title2)
-                            .padding(8)
-                            .background(
-                                Circle().fill(selection == emoji ? Color.accentColor.opacity(0.3) : .clear)
-                            )
-                    }
-                    .accessibilityLabel("Mood \(emoji)")
-                    .accessibilityAddTraits(selection == emoji ? .isSelected : [])
-                }
-            }
         }
     }
 }

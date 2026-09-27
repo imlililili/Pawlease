@@ -15,9 +15,8 @@ struct MomentCaptionTests {
         #expect(caption.value.count == 60)
     }
 
-    @Test func rejectsEmptyCaption() {
-        #expect(throws: DomainValidationError.captionEmpty) {
-            _ = try MomentCaption("   ")
-        }
+    @Test func emptyCaptionIsAcceptedAndNormalized() throws {
+        let caption = try MomentCaption("   ")
+        #expect(caption.value.isEmpty)
     }
 }
