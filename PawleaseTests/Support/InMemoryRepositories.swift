@@ -41,6 +41,10 @@ final class InMemoryMemberRepository: MemberRepository, @unchecked Sendable {
         }
         return member
     }
+
+    func deleteMember(circleID: UUID, profileID: UUID) async throws {
+        members.removeAll { $0.circleID == circleID && $0.profileID == profileID }
+    }
 }
 
 final class InMemoryUserProfileRepository: UserProfileRepository, @unchecked Sendable {
@@ -102,5 +106,9 @@ final class InMemoryMomentRepository: MomentRepository, @unchecked Sendable {
             moments.append(moment)
         }
         return moment
+    }
+
+    func deleteMoments(circleID: UUID, authorProfileID: UUID) async throws {
+        moments.removeAll { $0.circleID == circleID && $0.authorProfileID == authorProfileID }
     }
 }
