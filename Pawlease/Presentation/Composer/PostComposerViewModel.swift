@@ -21,6 +21,7 @@ final class PostComposerViewModel {
     }
     private(set) var previewImage: Image?
     private(set) var rawImageData: Data?
+    private(set) var pendingCropImage: UIImage?
 
     var captionText: String = "" {
         didSet {
@@ -86,14 +87,33 @@ final class PostComposerViewModel {
         guard let selectedItem else { return }
         do {
             guard let data = try await selectedItem.loadTransferable(type: Data.self) else { return }
-            setPhotoData(data)
+            guard let image = photoProcessingService.normalizedImage(from: data) else {
+                publishState = .error("That photo couldn't be loaded. Please try again.")
+                return
+            }
+            pendingCropImage = image
         } catch {
             publishState = .error("Couldn't load that photo. Please try another one.")
         }
     }
 
     func setCapturedPhotoData(_ data: Data) {
+        guard let croppedData = photoProcessingService.centerCroppedData(from: data) else {
+            publishState = .error("That photo couldn't be loaded. Please try again.")
+            return
+        }
+        setPhotoData(croppedData)
+    }
+
+    func useCroppedLibraryPhoto(_ data: Data) {
+        pendingCropImage = nil
+        selectedItem = nil
         setPhotoData(data)
+    }
+
+    func cancelLibraryPhotoCrop() {
+        pendingCropImage = nil
+        selectedItem = nil
     }
 
     private func setPhotoData(_ data: Data) {
