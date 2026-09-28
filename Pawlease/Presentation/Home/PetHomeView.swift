@@ -110,6 +110,19 @@ struct PetHomeView: View {
                 .controlSize(.large)
                 .accessibilityHint("Opens the Moment composer to take a photo or choose one from your library.")
 
+                if let diaryFeedViewModel = viewModel.makeCircleDiaryFeedViewModel() {
+                    NavigationLink {
+                        CircleDiaryFeedView(viewModel: diaryFeedViewModel)
+                    } label: {
+                        Label("Circle Diary", systemImage: "text.bubble.fill")
+                            .font(.headline)
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.large)
+                    .accessibilityHint("Opens the private, text-only Circle Diary feed — separate from today's photo.")
+                }
+
                 #if DEBUG
                 localCollaborationDemoSection
                 #endif

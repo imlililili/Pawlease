@@ -83,6 +83,15 @@ final class PetHomeViewModel {
     private let consumePendingDraftUseCase: ConsumePendingDraftUseCase
     private let simulateFriendCheckInUseCase: SimulateFriendCheckInUseCase
     private let cleanUpLegacyDemoFriendUseCase: CleanUpLegacyDemoFriendUseCase
+    private let publishDiaryEntryUseCase: PublishDiaryEntryUseCase
+    private let loadActiveDiaryFeedUseCase: LoadActiveDiaryFeedUseCase
+    private let loadMyDiaryArchiveUseCase: LoadMyDiaryArchiveUseCase
+    private let loadDiaryDetailUseCase: LoadDiaryDetailUseCase
+    private let addDiaryCommentUseCase: AddDiaryCommentUseCase
+    private let reactToDiaryEntryUseCase: ReactToDiaryEntryUseCase
+    private let reactToDiaryCommentUseCase: ReactToDiaryCommentUseCase
+    private let deleteDiaryEntryUseCase: DeleteDiaryEntryUseCase
+    private let screenCaptureStateProviding: ScreenCaptureStateProviding
     private let clock: ClockProviding
     /// Held only to forward to `CircleSettingsView` when constructed — this
     /// ViewModel never calls CloudKit APIs on it directly.
@@ -129,6 +138,15 @@ final class PetHomeViewModel {
         consumePendingDraftUseCase: ConsumePendingDraftUseCase,
         simulateFriendCheckInUseCase: SimulateFriendCheckInUseCase,
         cleanUpLegacyDemoFriendUseCase: CleanUpLegacyDemoFriendUseCase,
+        publishDiaryEntryUseCase: PublishDiaryEntryUseCase,
+        loadActiveDiaryFeedUseCase: LoadActiveDiaryFeedUseCase,
+        loadMyDiaryArchiveUseCase: LoadMyDiaryArchiveUseCase,
+        loadDiaryDetailUseCase: LoadDiaryDetailUseCase,
+        addDiaryCommentUseCase: AddDiaryCommentUseCase,
+        reactToDiaryEntryUseCase: ReactToDiaryEntryUseCase,
+        reactToDiaryCommentUseCase: ReactToDiaryCommentUseCase,
+        deleteDiaryEntryUseCase: DeleteDiaryEntryUseCase,
+        screenCaptureStateProviding: ScreenCaptureStateProviding,
         clock: ClockProviding
     ) {
         self.loadPetHomeUseCase = loadPetHomeUseCase
@@ -161,6 +179,15 @@ final class PetHomeViewModel {
         self.consumePendingDraftUseCase = consumePendingDraftUseCase
         self.simulateFriendCheckInUseCase = simulateFriendCheckInUseCase
         self.cleanUpLegacyDemoFriendUseCase = cleanUpLegacyDemoFriendUseCase
+        self.publishDiaryEntryUseCase = publishDiaryEntryUseCase
+        self.loadActiveDiaryFeedUseCase = loadActiveDiaryFeedUseCase
+        self.loadMyDiaryArchiveUseCase = loadMyDiaryArchiveUseCase
+        self.loadDiaryDetailUseCase = loadDiaryDetailUseCase
+        self.addDiaryCommentUseCase = addDiaryCommentUseCase
+        self.reactToDiaryEntryUseCase = reactToDiaryEntryUseCase
+        self.reactToDiaryCommentUseCase = reactToDiaryCommentUseCase
+        self.deleteDiaryEntryUseCase = deleteDiaryEntryUseCase
+        self.screenCaptureStateProviding = screenCaptureStateProviding
         self.clock = clock
     }
 
@@ -341,6 +368,27 @@ final class PetHomeViewModel {
         )
     }
 
+    /// Builds the Circle Diary feed — a separate, text-only social surface
+    /// from the Daily Moment flow above. `nil` until the Circle snapshot has
+    /// loaded, matching every other `make*ViewModel()` factory here.
+    func makeCircleDiaryFeedViewModel() -> CircleDiaryFeedViewModel? {
+        guard let snapshot else { return nil }
+        return CircleDiaryFeedViewModel(
+            circleID: snapshot.circle.id,
+            currentMember: snapshot.currentMember,
+            loadActiveDiaryFeedUseCase: loadActiveDiaryFeedUseCase,
+            publishDiaryEntryUseCase: publishDiaryEntryUseCase,
+            loadDiaryDetailUseCase: loadDiaryDetailUseCase,
+            addDiaryCommentUseCase: addDiaryCommentUseCase,
+            deleteDiaryEntryUseCase: deleteDiaryEntryUseCase,
+            reactToDiaryEntryUseCase: reactToDiaryEntryUseCase,
+            reactToDiaryCommentUseCase: reactToDiaryCommentUseCase,
+            loadMyDiaryArchiveUseCase: loadMyDiaryArchiveUseCase,
+            screenCaptureStateProviding: screenCaptureStateProviding,
+            clock: clock
+        )
+    }
+
     func makeJoinCircleViewModel() -> JoinCircleViewModel {
         JoinCircleViewModel(
             resolveCircleInviteCodeUseCase: resolveCircleInviteCodeUseCase,
@@ -355,7 +403,8 @@ final class PetHomeViewModel {
             case .memberNotFound: return "We couldn't find your profile in this Circle."
             case .petNotFound: return "Your pet is missing. Please try again."
             case .feedLocked: return "Post today's moment to unlock your friends' feed."
-            case .momentNotFound, .commentNotFound, .notCommentAuthor, .pendingDraftCorrupted, .membershipFull:
+            case .momentNotFound, .commentNotFound, .notCommentAuthor, .pendingDraftCorrupted, .membershipFull,
+                 .diaryEntryNotFound, .notDiaryEntryAuthor, .diaryCommentNotFound, .diaryEntryCorrupted:
                 return "Something went wrong. Please try again."
             }
         }
