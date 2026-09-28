@@ -763,6 +763,11 @@ for its mock-based test coverage.
   on a single best-effort attempt.
 - Widget, Share Extension, memory calendar, and final pet artwork remain
   unimplemented — see §22.
+- **Screenshots of timed Circle Diary entries cannot be prevented** — iOS
+  exposes no public API to block a screenshot before it happens; Pawlease
+  can only detect screen recording/AirPlay/mirroring live and notify the
+  user after a screenshot is taken. See §20's Circle Diary privacy section
+  for the full explanation.
 
 ## 20. Privacy explanation
 
@@ -782,6 +787,41 @@ storage, mirrored through the same private/shared CloudKit zones as
 everything else — no separate media hosting service is used. No analytics,
 tracking, or third-party SDKs are present anywhere in the project.
 
+**Circle Diary privacy protection, and its honest limitation.** Timed Circle
+Diary entries (1/3/7-day visibility) get extra, presentation-layer privacy
+handling that permanent entries don't need, all driven by a single
+injectable `ScreenCaptureStateProviding` protocol (`DiaryPrivacyMonitor`
+wraps it) so this logic is testable without touching `UIScreen` or
+`UIApplication` directly:
+
+- **Screen recording, AirPlay, and screen mirroring** are all detected
+  through Apple's single documented `UIScreen.main.isCaptured` property and
+  its `UIScreen.capturedDidChangeNotification`. While any of them is active,
+  a timed entry's body text is replaced everywhere it renders with a
+  `PrivacyShieldView` placeholder — an eye-slash icon and caption, not the
+  real text.
+- **Backgrounding** is covered the same way: on
+  `UIApplication.willResignActiveNotification` (app switcher, incoming call,
+  Control Center), timed content is shielded until
+  `.didBecomeActiveNotification` fires again.
+- **Screenshots** are observed via
+  `UIApplication.userDidTakeScreenshotNotification` and surface an in-app
+  warning banner telling the person a screenshot was just taken.
+- **Permanent entries never consult any of this** — `shouldShieldTimedContent`
+  is only ever checked for entries whose `visibilityDuration != .permanent`.
+
+**The honest limitation, stated plainly: iOS has no public API that can
+reliably prevent a screenshot before it happens.**
+`UIApplication.userDidTakeScreenshotNotification` fires *after* the
+screenshot is already saved to Photos — it can inform, never block. No
+private API, secure-text-field trick, or view-obscuring hack is used here to
+claim otherwise, because none of those actually stop a screenshot either;
+they would only add fragility (and App Store risk) without changing this
+fact. The privacy protection above is genuinely the strongest set of
+supported, public signals Apple exposes for this — screen recording/AirPlay
+detection, backgrounding, and after-the-fact screenshot notice — and this
+project documents that ceiling rather than overstating what it does.
+
 ## 21. Current implementation status
 
 **Implemented:**
@@ -792,6 +832,13 @@ tracking, or third-party SDKs are present anywhere in the project.
 - Full schema for Circles, Members, Pets, Daily Posts, Comments, Post
   Reactions, and Comment Reactions; Semantic Domain Models, value objects,
   and repository protocols/implementations for all of it.
+- **Circle Diary**: a separate, text-only social feed (Diary Entries,
+  Comments, Reactions, Comment Reactions) that never affects Daily Moment
+  contributor count, survival, or streak; timed (1/3/7-day) or permanent
+  visibility with clock-injected, never-persisted expiry; soft deletion;
+  free-keyboard emoji reactions; a private per-member Archive for expired
+  entries; and screen-capture-aware privacy shielding for timed content —
+  see §20's privacy section for its documented limitation.
 - Use Cases for seeding, publishing, feed unlocking, care-status/streak
   calculation, comments, reactions, iCloud account checking, Circle
   invitation preparation/acceptance, sharing-state loading, and

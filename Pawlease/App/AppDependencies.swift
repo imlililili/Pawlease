@@ -26,6 +26,10 @@ final class AppDependencies {
     let shareInboxStore: ShareInboxStoring
     let userProfileRepository: UserProfileRepository
     let circleInviteCodeRepository: CircleInviteCodeRepository
+    let diaryEntryRepository: DiaryEntryRepository
+    let diaryCommentRepository: DiaryCommentRepository
+    let diaryReactionRepository: DiaryReactionRepository
+    let diaryCommentReactionRepository: DiaryCommentReactionRepository
 
     let photoProcessingService: PhotoProcessingService
     /// Infrastructure-layer adapter for the native sharing sheet. Held here
@@ -36,6 +40,10 @@ final class AppDependencies {
     /// Join-a-Circle counterpart to `cloudSharingControllerProvider`. Held
     /// here and passed to the ViewModel that needs it (never a Use Case).
     let shareURLOpener: ShareURLOpening
+    /// Infrastructure-layer adapter for screen-recording/AirPlay/mirroring
+    /// and screenshot detection, behind `ScreenCaptureStateProviding` so
+    /// Presentation logic is testable without `UIScreen`/`UIApplication`.
+    let screenCaptureStateProviding: ScreenCaptureStateProviding
 
     let seedDemoCircleUseCase: SeedDemoCircleUseCase
     let loadPetHomeUseCase: LoadPetHomeUseCase
@@ -71,6 +79,15 @@ final class AppDependencies {
     /// constructed like `simulateFriendCheckInUseCase`; only its call site
     /// in `PetHomeViewModel.performRefresh()` is `#if DEBUG`-gated.
     let cleanUpLegacyDemoFriendUseCase: CleanUpLegacyDemoFriendUseCase
+
+    let publishDiaryEntryUseCase: PublishDiaryEntryUseCase
+    let loadActiveDiaryFeedUseCase: LoadActiveDiaryFeedUseCase
+    let loadMyDiaryArchiveUseCase: LoadMyDiaryArchiveUseCase
+    let loadDiaryDetailUseCase: LoadDiaryDetailUseCase
+    let addDiaryCommentUseCase: AddDiaryCommentUseCase
+    let reactToDiaryEntryUseCase: ReactToDiaryEntryUseCase
+    let reactToDiaryCommentUseCase: ReactToDiaryCommentUseCase
+    let deleteDiaryEntryUseCase: DeleteDiaryEntryUseCase
 
     init(
         persistenceController: PersistenceController,
@@ -119,6 +136,16 @@ final class AppDependencies {
         let circleInviteCodeRepo = CloudKitCircleInviteCodeRepository()
         self.circleInviteCodeRepository = circleInviteCodeRepo
         self.shareURLOpener = SystemShareURLOpener()
+        self.screenCaptureStateProviding = SystemScreenCaptureStateProvider()
+
+        let diaryEntryRepo = CoreDataDiaryEntryRepository(container: container)
+        let diaryCommentRepo = CoreDataDiaryCommentRepository(container: container)
+        let diaryReactionRepo = CoreDataDiaryReactionRepository(container: container)
+        let diaryCommentReactionRepo = CoreDataDiaryCommentReactionRepository(container: container)
+        self.diaryEntryRepository = diaryEntryRepo
+        self.diaryCommentRepository = diaryCommentRepo
+        self.diaryReactionRepository = diaryReactionRepo
+        self.diaryCommentReactionRepository = diaryCommentReactionRepo
 
         self.seedDemoCircleUseCase = SeedDemoCircleUseCase(
             circleRepository: circleRepo,
@@ -219,6 +246,44 @@ final class AppDependencies {
         self.cleanUpLegacyDemoFriendUseCase = CleanUpLegacyDemoFriendUseCase(
             memberRepository: memberRepo,
             momentRepository: momentRepo
+        )
+
+        self.publishDiaryEntryUseCase = PublishDiaryEntryUseCase(
+            diaryEntryRepository: diaryEntryRepo,
+            clock: clock
+        )
+        self.loadActiveDiaryFeedUseCase = LoadActiveDiaryFeedUseCase(
+            diaryEntryRepository: diaryEntryRepo,
+            diaryCommentRepository: diaryCommentRepo,
+            diaryReactionRepository: diaryReactionRepo,
+            clock: clock
+        )
+        self.loadMyDiaryArchiveUseCase = LoadMyDiaryArchiveUseCase(
+            diaryEntryRepository: diaryEntryRepo,
+            clock: clock
+        )
+        self.loadDiaryDetailUseCase = LoadDiaryDetailUseCase(
+            diaryEntryRepository: diaryEntryRepo,
+            diaryCommentRepository: diaryCommentRepo,
+            diaryReactionRepository: diaryReactionRepo,
+            diaryCommentReactionRepository: diaryCommentReactionRepo
+        )
+        self.addDiaryCommentUseCase = AddDiaryCommentUseCase(
+            diaryCommentRepository: diaryCommentRepo,
+            diaryEntryRepository: diaryEntryRepo,
+            clock: clock
+        )
+        self.reactToDiaryEntryUseCase = ReactToDiaryEntryUseCase(
+            diaryReactionRepository: diaryReactionRepo,
+            clock: clock
+        )
+        self.reactToDiaryCommentUseCase = ReactToDiaryCommentUseCase(
+            diaryCommentReactionRepository: diaryCommentReactionRepo,
+            clock: clock
+        )
+        self.deleteDiaryEntryUseCase = DeleteDiaryEntryUseCase(
+            diaryEntryRepository: diaryEntryRepo,
+            clock: clock
         )
     }
 

@@ -165,7 +165,8 @@ final class PostDetailViewModel {
             case .momentNotFound: return "This moment is no longer available."
             case .commentNotFound: return "That comment is no longer available."
             case .notCommentAuthor: return "You can only remove your own comments."
-            case .circleNotFound, .memberNotFound, .petNotFound, .feedLocked, .pendingDraftCorrupted, .membershipFull:
+            case .circleNotFound, .memberNotFound, .petNotFound, .feedLocked, .pendingDraftCorrupted, .membershipFull,
+                 .diaryEntryNotFound, .notDiaryEntryAuthor, .diaryCommentNotFound, .diaryEntryCorrupted:
                 return "Something went wrong. Please try again."
             }
         }
@@ -176,7 +177,8 @@ final class PostDetailViewModel {
         switch error {
         case .commentTooLong: return "Comments must be 60 characters or fewer."
         case .commentEmpty: return "Please write something before sending."
-        case .captionTooLong, .captionEmpty, .emptyPhotoData, .invalidReactionEmoji:
+        case .captionTooLong, .captionEmpty, .emptyPhotoData, .invalidReactionEmoji,
+             .diaryBodyTooLong, .diaryBodyEmpty, .invalidDiaryReactionEmoji:
             return "Something went wrong. Please try again."
         }
     }

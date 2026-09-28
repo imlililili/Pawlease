@@ -9,6 +9,9 @@ enum DomainValidationError: Error, Equatable, Sendable {
     case commentTooLong
     case commentEmpty
     case invalidReactionEmoji
+    case diaryBodyTooLong
+    case diaryBodyEmpty
+    case invalidDiaryReactionEmoji
 }
 
 /// Failures surfaced while orchestrating Use Cases. These represent Circle
@@ -27,4 +30,11 @@ enum DomainError: Error, Equatable, Sendable {
     case pendingDraftCorrupted
     /// Joining would exceed the Circle's maximum member count.
     case membershipFull
+    case diaryEntryNotFound
+    case notDiaryEntryAuthor
+    case diaryCommentNotFound
+    /// A `DiaryEntryEntity` row has a `visibilityDuration` that doesn't
+    /// match any `DiaryVisibilityDuration` case — the record can't be
+    /// represented as a `DiaryEntry`.
+    case diaryEntryCorrupted
 }

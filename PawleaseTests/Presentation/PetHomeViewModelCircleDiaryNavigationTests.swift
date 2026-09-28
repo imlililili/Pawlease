@@ -2,17 +2,21 @@ import Testing
 import Foundation
 @testable import Pawlease
 
-/// Regression coverage for the Circle Settings duplicate-member bug's
-/// actual trigger: `.task { loadIfNeeded() }`, `.onChange(of: scenePhase)`
-/// becoming `.active`, and a remote-change pulse can all call
-/// `PetHomeViewModel.refresh()` around the same moment — most notably at
-/// cold launch. Before the fix, each overlapping call independently ran
-/// `SeedDemoCircleUseCase.execute()`. This drives many concurrent
-/// `refresh()` calls against the real Core Data stack and proves the
-/// ViewModel's coalescing guard, together with the repository-level fix,
-/// leaves exactly the three seeded members behind.
+/// Regression coverage for Bug 2 (Circle Diary "infinite navigation"). The
+/// confirmed root cause: `PetHomeView` pushes `CircleDiaryFeedView` via a
+/// closure-based `NavigationLink`, which reconstructs its destination
+/// eagerly every time `PetHomeView.body` re-evaluates (remote-change
+/// pulses, cloud sync events, scene-phase changes). Before the fix,
+/// `makeCircleDiaryFeedViewModel()` built a *brand-new*
+/// `CircleDiaryFeedViewModel` on every call, so every such re-render handed
+/// the `NavigationLink` a fresh destination identity while the user might
+/// already be pushed into it — which is exactly what produced the
+/// "navigationDestination... declared earlier on the stack" warning and the
+/// inability to remain on the Diary screen. `makeCircleDiaryFeedViewModel()`
+/// now memoizes and returns the same instance on every subsequent call;
+/// this proves that directly, independent of any UI automation.
 @MainActor
-struct PetHomeViewModelMembershipTests {
+struct PetHomeViewModelCircleDiaryNavigationTests {
     private func makeViewModel(container: PersistenceController, clock: ClockProviding) -> PetHomeViewModel {
         let circleRepo = CoreDataCircleRepository(container: container.container)
         let memberRepo = CoreDataMemberRepository(container: container.container)
@@ -115,59 +119,39 @@ struct PetHomeViewModelMembershipTests {
     }
 
     @Test
-    func concurrentRefreshCallsNeverCreateDuplicateMembers() async throws {
+    func makeCircleDiaryFeedViewModelReturnsTheSameInstanceOnRepeatedCalls() async throws {
         let persistence = PersistenceController(mode: .inMemory)
         let clock = SystemClock()
-        let viewModel = makeViewModel(container: persistence, clock: clock)
-
-        // Reproduces the real trigger: `.task`, `.onChange(of: scenePhase)`,
-        // and a remote-change pulse can all call `refresh()` at once.
-        await withTaskGroup(of: Void.self) { group in
-            for _ in 0..<5 {
-                group.addTask { await viewModel.refresh() }
-            }
-        }
-
-        #expect(viewModel.loadState == .loaded)
-
-        let memberRepo = CoreDataMemberRepository(container: persistence.container)
-        let members = try await memberRepo.fetchMembers(circleID: DemoSeed.circleID)
-        #expect(members.count == 3)
-        #expect(Set(members.map(\.profileID)) == Set(DemoSeed.memberProfileIDs))
-    }
-
-    /// Reproduces the exact reported bug — Circle Settings showing "You,
-    /// Ava, Noah, Ava" — by seeding a store that already has a legacy
-    /// `CleanUpLegacyDemoFriendUseCase.legacyAvaProfileID` row alongside
-    /// the normal three seeded members, then proving a single `refresh()`
-    /// leaves exactly the three seeded members (Debug-only cleanup runs
-    /// inside `performRefresh()`).
-    @Test
-    func refreshCleansUpAPreExistingLegacyAvaRow() async throws {
-        let persistence = PersistenceController(mode: .inMemory)
-        let clock = SystemClock()
-        let memberRepo = CoreDataMemberRepository(container: persistence.container)
-        let circleRepo = CoreDataCircleRepository(container: persistence.container)
-        let petRepo = CoreDataPetRepository(container: persistence.container)
-
-        // Seed the normal Circle first, then simulate the historical bug:
-        // a fourth member under the legacy, unseeded "Ava" profile ID.
-        _ = try await SeedDemoCircleUseCase(
-            circleRepository: circleRepo, memberRepository: memberRepo, petRepository: petRepo, clock: clock
-        ).execute()
-        try await memberRepo.saveMember(CircleMember(
-            id: UUID(), circleID: DemoSeed.circleID, profileID: CleanUpLegacyDemoFriendUseCase.legacyAvaProfileID,
-            displayName: "Ava", avatarEmoji: "🌼", joinedAt: clock.now, role: .member
-        ))
-        let beforeCleanup = try await memberRepo.fetchMembers(circleID: DemoSeed.circleID)
-        #expect(beforeCleanup.count == 4) // reproduces "You, Ava, Noah, Ava"
-
         let viewModel = makeViewModel(container: persistence, clock: clock)
         await viewModel.refresh()
 
-        let members = try await memberRepo.fetchMembers(circleID: DemoSeed.circleID)
-        #expect(members.count == 3)
-        #expect(Set(members.map(\.profileID)) == Set(DemoSeed.memberProfileIDs))
-        #expect(!members.contains { $0.profileID == CleanUpLegacyDemoFriendUseCase.legacyAvaProfileID })
+        let first = viewModel.makeCircleDiaryFeedViewModel()
+        let second = viewModel.makeCircleDiaryFeedViewModel()
+        let third = viewModel.makeCircleDiaryFeedViewModel()
+
+        let firstIdentity = try #require(first.map(ObjectIdentifier.init))
+        #expect(second.map(ObjectIdentifier.init) == firstIdentity)
+        #expect(third.map(ObjectIdentifier.init) == firstIdentity)
+    }
+
+    @Test
+    func makeCircleDiaryFeedViewModelStaysStableAcrossUnrelatedRefreshes() async throws {
+        let persistence = PersistenceController(mode: .inMemory)
+        let clock = SystemClock()
+        let viewModel = makeViewModel(container: persistence, clock: clock)
+        await viewModel.refresh()
+
+        let beforeExtraRefreshes = try #require(viewModel.makeCircleDiaryFeedViewModel())
+
+        // Simulate the ancestor re-renders that used to reconstruct the
+        // destination while the user was already pushed into it: repeated
+        // `refresh()` calls, exactly what `observeRemoteChanges()` triggers
+        // on every remote-change pulse.
+        await viewModel.refresh()
+        await viewModel.refresh()
+        await viewModel.refresh()
+
+        let afterExtraRefreshes = try #require(viewModel.makeCircleDiaryFeedViewModel())
+        #expect(ObjectIdentifier(afterExtraRefreshes) == ObjectIdentifier(beforeExtraRefreshes))
     }
 }

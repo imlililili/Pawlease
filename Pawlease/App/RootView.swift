@@ -37,6 +37,15 @@ struct RootView: View {
                     consumePendingDraftUseCase: dependencies.consumePendingDraftUseCase,
                     simulateFriendCheckInUseCase: dependencies.simulateFriendCheckInUseCase,
                     cleanUpLegacyDemoFriendUseCase: dependencies.cleanUpLegacyDemoFriendUseCase,
+                    publishDiaryEntryUseCase: dependencies.publishDiaryEntryUseCase,
+                    loadActiveDiaryFeedUseCase: dependencies.loadActiveDiaryFeedUseCase,
+                    loadMyDiaryArchiveUseCase: dependencies.loadMyDiaryArchiveUseCase,
+                    loadDiaryDetailUseCase: dependencies.loadDiaryDetailUseCase,
+                    addDiaryCommentUseCase: dependencies.addDiaryCommentUseCase,
+                    reactToDiaryEntryUseCase: dependencies.reactToDiaryEntryUseCase,
+                    reactToDiaryCommentUseCase: dependencies.reactToDiaryCommentUseCase,
+                    deleteDiaryEntryUseCase: dependencies.deleteDiaryEntryUseCase,
+                    screenCaptureStateProviding: dependencies.screenCaptureStateProviding,
                     clock: dependencies.clock
                 )
             )

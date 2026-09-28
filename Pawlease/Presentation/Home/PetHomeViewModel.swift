@@ -83,7 +83,28 @@ final class PetHomeViewModel {
     private let consumePendingDraftUseCase: ConsumePendingDraftUseCase
     private let simulateFriendCheckInUseCase: SimulateFriendCheckInUseCase
     private let cleanUpLegacyDemoFriendUseCase: CleanUpLegacyDemoFriendUseCase
+    private let publishDiaryEntryUseCase: PublishDiaryEntryUseCase
+    private let loadActiveDiaryFeedUseCase: LoadActiveDiaryFeedUseCase
+    private let loadMyDiaryArchiveUseCase: LoadMyDiaryArchiveUseCase
+    private let loadDiaryDetailUseCase: LoadDiaryDetailUseCase
+    private let addDiaryCommentUseCase: AddDiaryCommentUseCase
+    private let reactToDiaryEntryUseCase: ReactToDiaryEntryUseCase
+    private let reactToDiaryCommentUseCase: ReactToDiaryCommentUseCase
+    private let deleteDiaryEntryUseCase: DeleteDiaryEntryUseCase
+    private let screenCaptureStateProviding: ScreenCaptureStateProviding
     private let clock: ClockProviding
+    /// Memoized by `makeCircleDiaryFeedViewModel()` so Pet Home's push to
+    /// Circle Diary stays backed by one stable `CircleDiaryFeedViewModel`
+    /// instance for the life of this screen, rather than a fresh one on
+    /// every `PetHomeView.body` re-evaluation (remote-change pulses, cloud
+    /// sync events, scene-phase changes). A closure-based `NavigationLink`
+    /// constructs its destination eagerly on every such re-render; without
+    /// this cache, that meant a brand-new `CircleDiaryFeedView` identity —
+    /// and a freshly re-registered `.navigationDestination(for:
+    /// DiaryEntryRoute.self)` — while the user was still pushed into it,
+    /// which is what produced the "declared earlier on the stack" warning
+    /// and the inability to stay on the Diary screen.
+    private var diaryFeedViewModel: CircleDiaryFeedViewModel?
     /// Held only to forward to `CircleSettingsView` when constructed — this
     /// ViewModel never calls CloudKit APIs on it directly.
     let cloudSharingControllerProvider: CloudSharingControllerProviding
@@ -129,6 +150,15 @@ final class PetHomeViewModel {
         consumePendingDraftUseCase: ConsumePendingDraftUseCase,
         simulateFriendCheckInUseCase: SimulateFriendCheckInUseCase,
         cleanUpLegacyDemoFriendUseCase: CleanUpLegacyDemoFriendUseCase,
+        publishDiaryEntryUseCase: PublishDiaryEntryUseCase,
+        loadActiveDiaryFeedUseCase: LoadActiveDiaryFeedUseCase,
+        loadMyDiaryArchiveUseCase: LoadMyDiaryArchiveUseCase,
+        loadDiaryDetailUseCase: LoadDiaryDetailUseCase,
+        addDiaryCommentUseCase: AddDiaryCommentUseCase,
+        reactToDiaryEntryUseCase: ReactToDiaryEntryUseCase,
+        reactToDiaryCommentUseCase: ReactToDiaryCommentUseCase,
+        deleteDiaryEntryUseCase: DeleteDiaryEntryUseCase,
+        screenCaptureStateProviding: ScreenCaptureStateProviding,
         clock: ClockProviding
     ) {
         self.loadPetHomeUseCase = loadPetHomeUseCase
@@ -161,6 +191,15 @@ final class PetHomeViewModel {
         self.consumePendingDraftUseCase = consumePendingDraftUseCase
         self.simulateFriendCheckInUseCase = simulateFriendCheckInUseCase
         self.cleanUpLegacyDemoFriendUseCase = cleanUpLegacyDemoFriendUseCase
+        self.publishDiaryEntryUseCase = publishDiaryEntryUseCase
+        self.loadActiveDiaryFeedUseCase = loadActiveDiaryFeedUseCase
+        self.loadMyDiaryArchiveUseCase = loadMyDiaryArchiveUseCase
+        self.loadDiaryDetailUseCase = loadDiaryDetailUseCase
+        self.addDiaryCommentUseCase = addDiaryCommentUseCase
+        self.reactToDiaryEntryUseCase = reactToDiaryEntryUseCase
+        self.reactToDiaryCommentUseCase = reactToDiaryCommentUseCase
+        self.deleteDiaryEntryUseCase = deleteDiaryEntryUseCase
+        self.screenCaptureStateProviding = screenCaptureStateProviding
         self.clock = clock
     }
 
@@ -341,6 +380,34 @@ final class PetHomeViewModel {
         )
     }
 
+    /// Builds the Circle Diary feed — a separate, text-only social surface
+    /// from the Daily Moment flow above. `nil` until the Circle snapshot has
+    /// loaded, matching every other `make*ViewModel()` factory here.
+    ///
+    /// Returns the same memoized instance on every call after the first —
+    /// see `diaryFeedViewModel`'s doc comment for why that stability matters
+    /// for the `NavigationLink` that pushes it from `PetHomeView`.
+    func makeCircleDiaryFeedViewModel() -> CircleDiaryFeedViewModel? {
+        if let diaryFeedViewModel { return diaryFeedViewModel }
+        guard let snapshot else { return nil }
+        let viewModel = CircleDiaryFeedViewModel(
+            circleID: snapshot.circle.id,
+            currentMember: snapshot.currentMember,
+            loadActiveDiaryFeedUseCase: loadActiveDiaryFeedUseCase,
+            publishDiaryEntryUseCase: publishDiaryEntryUseCase,
+            loadDiaryDetailUseCase: loadDiaryDetailUseCase,
+            addDiaryCommentUseCase: addDiaryCommentUseCase,
+            deleteDiaryEntryUseCase: deleteDiaryEntryUseCase,
+            reactToDiaryEntryUseCase: reactToDiaryEntryUseCase,
+            reactToDiaryCommentUseCase: reactToDiaryCommentUseCase,
+            loadMyDiaryArchiveUseCase: loadMyDiaryArchiveUseCase,
+            screenCaptureStateProviding: screenCaptureStateProviding,
+            clock: clock
+        )
+        diaryFeedViewModel = viewModel
+        return viewModel
+    }
+
     func makeJoinCircleViewModel() -> JoinCircleViewModel {
         JoinCircleViewModel(
             resolveCircleInviteCodeUseCase: resolveCircleInviteCodeUseCase,
@@ -355,7 +422,8 @@ final class PetHomeViewModel {
             case .memberNotFound: return "We couldn't find your profile in this Circle."
             case .petNotFound: return "Your pet is missing. Please try again."
             case .feedLocked: return "Post today's moment to unlock your friends' feed."
-            case .momentNotFound, .commentNotFound, .notCommentAuthor, .pendingDraftCorrupted, .membershipFull:
+            case .momentNotFound, .commentNotFound, .notCommentAuthor, .pendingDraftCorrupted, .membershipFull,
+                 .diaryEntryNotFound, .notDiaryEntryAuthor, .diaryCommentNotFound, .diaryEntryCorrupted:
                 return "Something went wrong. Please try again."
             }
         }
