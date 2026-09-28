@@ -8,7 +8,6 @@ struct PostComposerViewState: Equatable {
 
     init(captionText: String, limit: Int) {
         characterCountLabel = "\(captionText.count)/\(limit)"
-        let trimmed = captionText.trimmingCharacters(in: .whitespacesAndNewlines)
-        isCaptionValid = !trimmed.isEmpty && captionText.count <= limit
+        isCaptionValid = captionText.count <= limit
     }
 }

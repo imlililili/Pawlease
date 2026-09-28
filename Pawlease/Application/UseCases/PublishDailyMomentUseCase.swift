@@ -15,8 +15,7 @@ struct PublishDailyMomentUseCase: Sendable {
         circle: FriendCircle,
         member: CircleMember,
         photo: MomentPhoto,
-        captionText: String,
-        moodEmoji: String?
+        captionText: String
     ) async throws -> DailyMoment {
         let caption = try MomentCaption(captionText)
         let day = CircleDay(date: clock.now, timeZoneIdentifier: circle.timezoneIdentifier)
@@ -32,7 +31,7 @@ struct PublishDailyMomentUseCase: Sendable {
             authorNameSnapshot: member.displayName,
             day: day,
             caption: caption,
-            moodEmoji: moodEmoji,
+            moodEmoji: nil,
             photo: photo,
             createdAt: existing?.createdAt ?? clock.now
         )

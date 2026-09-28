@@ -82,7 +82,7 @@ struct SimulateFriendCheckInUseCaseTests {
         }
         #expect(moment.authorProfileID == DemoSeed.avaProfileID)
         #expect(moment.caption.value == SimulateFriendCheckInUseCase.CheckInContent.caption)
-        #expect(moment.moodEmoji == SimulateFriendCheckInUseCase.CheckInContent.moodEmoji)
+        #expect(moment.moodEmoji == nil)
         #expect(!moment.photo.imageData.isEmpty)
         #expect(!moment.photo.thumbnailData.isEmpty)
 
@@ -148,8 +148,8 @@ struct SimulateFriendCheckInUseCaseTests {
         // still only one contributor.
         let publishUseCase = PublishDailyMomentUseCase(momentRepository: momentRepo, clock: clock)
         let photo = try MomentPhoto(imageData: Data([0xFF]), thumbnailData: Data([0xFF]))
-        _ = try await publishUseCase.execute(circle: circle, member: currentMember, photo: photo, captionText: "First", moodEmoji: nil)
-        _ = try await publishUseCase.execute(circle: circle, member: currentMember, photo: photo, captionText: "Second", moodEmoji: nil)
+        _ = try await publishUseCase.execute(circle: circle, member: currentMember, photo: photo, captionText: "First")
+        _ = try await publishUseCase.execute(circle: circle, member: currentMember, photo: photo, captionText: "Second")
 
         let useCase = makeUseCase(memberRepository: memberRepo, momentRepository: momentRepo, clock: clock)
         _ = try await useCase.execute(circle: circle, currentMember: currentMember)

@@ -3,6 +3,9 @@ import SwiftUI
 
 struct PostComposerView: View {
     @State private var viewModel: PostComposerViewModel
+    @State private var isPhotoSourceDialogPresented = false
+    @State private var isCameraPresented = false
+    @State private var isPhotoLibraryPresented = false
     @Environment(\.dismiss) private var dismiss
 
     init(viewModel: PostComposerViewModel) {
@@ -12,16 +15,20 @@ struct PostComposerView: View {
     var body: some View {
         Form {
             Section {
-                PhotosPicker(selection: $viewModel.selectedItem, matching: .images) {
+                Button {
+                    isPhotoSourceDialogPresented = true
+                } label: {
                     photoPreview
                 }
-                .accessibilityLabel(viewModel.previewImage == nil ? "Choose a photo" : "Change photo")
+                .buttonStyle(.plain)
+                .accessibilityLabel(viewModel.previewImage == nil ? "Add today's photo" : "Change today's photo")
+                .accessibilityHint("Choose whether to take a photo or select one from your photo library")
             }
 
             Section {
-                TextField("What's happening today?", text: $viewModel.captionText, axis: .vertical)
+                TextField("Add a caption (optional)", text: $viewModel.captionText, axis: .vertical)
                     .lineLimit(2...4)
-                    .accessibilityLabel("Caption")
+                    .accessibilityLabel("Optional caption")
                 HStack {
                     Spacer()
                     Text(viewModel.viewState.characterCountLabel)
@@ -29,13 +36,7 @@ struct PostComposerView: View {
                         .foregroundStyle(viewModel.viewState.isCaptionValid ? Color.secondary : Color.red)
                         .accessibilityLabel("\(viewModel.viewState.characterCountLabel) characters used")
                 }
-            } header: {
-                Text("Caption")
-            }
-
-            Section("Mood (optional)") {
-                MoodPicker(options: viewModel.moodOptions, selection: $viewModel.selectedMood)
-            }
+            } header: { Text("Caption (optional)") }
 
             if case .error(let message) = viewModel.publishState {
                 Section {
@@ -63,50 +64,93 @@ struct PostComposerView: View {
                     }
                 }
                 .disabled(!viewModel.canPublish)
-                .accessibilityHint(viewModel.canPublish ? "" : "Add a photo and a caption to publish")
+                .accessibilityHint(viewModel.canPublish ? "" : "Add a photo to publish")
             }
         }
+        .fullScreenCover(isPresented: $isCameraPresented) {
+            MomentCameraView { data in
+                viewModel.setCapturedPhotoData(data)
+            }
+        }
+        .fullScreenCover(
+            isPresented: Binding(
+                get: { viewModel.pendingCropImage != nil },
+                set: { isPresented in
+                    if !isPresented { viewModel.cancelLibraryPhotoCrop() }
+                }
+            )
+        ) {
+            if let image = viewModel.pendingCropImage {
+                SquarePhotoCropView(
+                    image: image,
+                    onCancel: viewModel.cancelLibraryPhotoCrop,
+                    onUsePhoto: viewModel.useCroppedLibraryPhoto
+                )
+            }
+        }
+        .photosPicker(
+            isPresented: $isPhotoLibraryPresented,
+            selection: $viewModel.selectedItem,
+            matching: .images
+        )
+        .overlay {
+            if isPhotoSourceDialogPresented {
+                photoSourceDialog
+                    .transition(.scale(scale: 0.96).combined(with: .opacity))
+            }
+        }
+        .animation(.easeOut(duration: 0.18), value: isPhotoSourceDialogPresented)
     }
 
     @ViewBuilder
     private var photoPreview: some View {
-        if let previewImage = viewModel.previewImage {
-            previewImage
-                .resizable()
-                .scaledToFill()
-                .frame(height: 220)
-                .frame(maxWidth: .infinity)
-                .clipShape(RoundedRectangle(cornerRadius: 16))
-        } else {
-            ContentUnavailableView("Select a Photo", systemImage: "photo.badge.plus")
-                .frame(height: 220)
-                .frame(maxWidth: .infinity)
-        }
-    }
-}
-
-private struct MoodPicker: View {
-    let options: [String]
-    @Binding var selection: String?
-
-    var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 12) {
-                ForEach(options, id: \.self) { emoji in
-                    Button {
-                        selection = (selection == emoji) ? nil : emoji
-                    } label: {
-                        Text(emoji)
-                            .font(.title2)
-                            .padding(8)
-                            .background(
-                                Circle().fill(selection == emoji ? Color.accentColor.opacity(0.3) : .clear)
-                            )
-                    }
-                    .accessibilityLabel("Mood \(emoji)")
-                    .accessibilityAddTraits(selection == emoji ? .isSelected : [])
-                }
+        ZStack {
+            if let previewImage = viewModel.previewImage {
+                previewImage
+                    .resizable()
+                    .scaledToFill()
+            } else {
+                ContentUnavailableView("Add Today's Photo", systemImage: "camera.fill")
             }
+        }
+        .frame(maxWidth: .infinity)
+        .aspectRatio(1, contentMode: .fit)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .contentShape(RoundedRectangle(cornerRadius: 16))
+    }
+
+    private var photoSourceDialog: some View {
+        ZStack {
+            Color.black.opacity(0.25)
+                .ignoresSafeArea()
+                .onTapGesture {
+                    isPhotoSourceDialogPresented = false
+                }
+
+            VStack(spacing: 0) {
+                Button("Take Photo") {
+                    isPhotoSourceDialogPresented = false
+                    isCameraPresented = true
+                }
+                .frame(maxWidth: .infinity)
+                .frame(minHeight: 56)
+
+                Divider()
+
+                Button("Photo Library") {
+                    isPhotoSourceDialogPresented = false
+                    isPhotoLibraryPresented = true
+                }
+                .frame(maxWidth: .infinity)
+                .frame(minHeight: 56)
+            }
+            .buttonStyle(.plain)
+            .font(.headline)
+            .foregroundStyle(.primary)
+            .frame(width: 280)
+            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 20))
+            .accessibilityElement(children: .contain)
+            .accessibilityLabel("Photo source")
         }
     }
 }

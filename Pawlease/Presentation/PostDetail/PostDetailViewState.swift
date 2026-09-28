@@ -23,7 +23,6 @@ struct PostDetailViewState: Equatable {
 
     let authorName: String
     let caption: String
-    let moodEmoji: String?
     let createdAt: Date
     let imageData: Data
     let momentReactionSummary: [ReactionSummaryItem]
@@ -33,7 +32,6 @@ struct PostDetailViewState: Equatable {
     init(result: LoadMomentDetailUseCase.Result, currentMemberProfileID: UUID) {
         authorName = result.moment.authorNameSnapshot
         caption = result.moment.caption.value
-        moodEmoji = result.moment.moodEmoji
         createdAt = result.moment.createdAt
         imageData = result.moment.photo.imageData
         momentReactionSummary = Self.summarize(result.momentReactions.map(\.emoji))

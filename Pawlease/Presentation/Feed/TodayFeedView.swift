@@ -1,62 +1,91 @@
 import SwiftUI
 
+/// Today's photo-first Moment surface. Every member's contribution occupies
+/// the same square stage; paging keeps it distinct from the text-only Diary
+/// feed that will live below it.
 struct TodayFeedView: View {
     let moments: [DailyMoment]
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Today's Moments")
-                .font(.headline)
-
-            ForEach(moments) { moment in
-                NavigationLink(value: moment.id) {
-                    MomentRow(moment: moment)
-                }
-                .buttonStyle(.plain)
+        VStack(alignment: .leading) {
+            HStack {
+                Text("Today's Moments")
+                    .font(.headline)
+                Spacer()
+                Text("\(moments.count) shared")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
             }
+
+            TabView {
+                ForEach(moments) { moment in
+                    NavigationLink(value: moment.id) {
+                        MomentSquareCard(moment: moment)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .tabViewStyle(.page(indexDisplayMode: moments.count > 1 ? .automatic : .never))
+            .aspectRatio(1, contentMode: .fit)
+            .clipShape(RoundedRectangle(cornerRadius: 24))
         }
     }
 }
 
-private struct MomentRow: View {
+private struct MomentSquareCard: View {
     let moment: DailyMoment
 
     var body: some View {
-        HStack(alignment: .top, spacing: 12) {
-            thumbnail
+        ZStack(alignment: .bottom) {
+            photo
 
-            VStack(alignment: .leading, spacing: 4) {
-                HStack {
+            LinearGradient(
+                colors: [.clear, .black.opacity(0.72)],
+                startPoint: .center,
+                endPoint: .bottom
+            )
+
+            HStack(alignment: .bottom) {
+                VStack(alignment: .leading, spacing: 4) {
                     Text(moment.authorNameSnapshot)
-                        .font(.subheadline.bold())
-                    if let mood = moment.moodEmoji {
-                        Text(mood)
+                        .font(.headline)
+                    if !moment.caption.value.isEmpty {
+                        Text(moment.caption.value)
+                            .font(.body)
+                            .lineLimit(2)
                     }
-                    Spacer()
-                    Text(moment.createdAt, style: .time)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
                 }
-                Text(moment.caption.value)
-                    .font(.body)
+                Spacer()
+                Text(moment.createdAt, style: .time)
+                    .font(.caption)
             }
+            .foregroundStyle(.white)
+            .padding()
         }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(moment.authorNameSnapshot): \(moment.caption.value)")
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessibilityLabel)
+        .accessibilityHint("Opens comments and reactions")
     }
 
-    private var thumbnail: some View {
-        Group {
-            if let uiImage = UIImage(data: moment.photo.thumbnailData) {
-                Image(uiImage: uiImage)
-                    .resizable()
-                    .scaledToFill()
-            } else {
-                Rectangle().fill(.secondary.opacity(0.2))
-            }
+    @ViewBuilder
+    private var photo: some View {
+        if let image = UIImage(data: moment.photo.imageData) {
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFill()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .clipped()
+        } else {
+            Rectangle()
+                .fill(.secondary.opacity(0.2))
+                .overlay { Image(systemName: "photo").font(.largeTitle) }
         }
-        .frame(width: 56, height: 56)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-        .accessibilityHidden(true)
+    }
+
+    private var accessibilityLabel: String {
+        if moment.caption.value.isEmpty {
+            return "Photo from \(moment.authorNameSnapshot)"
+        }
+        return "Photo from \(moment.authorNameSnapshot): \(moment.caption.value)"
     }
 }

@@ -13,12 +13,9 @@ final class PawleaseUITests: XCTestCase {
         continueAfterFailure = false
     }
 
-    /// Drives the real Phase 1 golden path: the seeded Circle appears on
-    /// launch, "Take Today's Photo" opens the Composer, Publish stays
-    /// disabled until a photo and caption are provided, and Cancel returns
-    /// to an unchanged Pet Home. Also confirms the comments/reactions
-    /// feature's navigation change (feed rows now link to Post Detail)
-    /// didn't disturb this existing flow.
+    /// Confirms the seeded Circle opens the photo-first Moment composer,
+    /// presents both capture sources only after the photo surface is tapped,
+    /// and handles Simulator's missing camera without trapping the user.
     @MainActor
     func testPetHomeShowsSeededCircleAndComposerGatesPublish() throws {
         let app = XCUIApplication()
@@ -28,8 +25,6 @@ final class PawleaseUITests: XCTestCase {
         XCTAssertTrue(petHomeTitle.waitForExistence(timeout: 5))
 
         XCTAssertTrue(app.staticTexts["Mochi"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.staticTexts["0 of 2 friends have shared today"].exists)
-        XCTAssertTrue(app.staticTexts["Feed Locked"].exists)
 
         app.buttons["Take Today's Photo"].tap()
 
@@ -39,6 +34,17 @@ final class PawleaseUITests: XCTestCase {
         let publishButton = app.buttons["Publish"]
         XCTAssertTrue(publishButton.waitForExistence(timeout: 5))
         XCTAssertFalse(publishButton.isEnabled)
+        XCTAssertFalse(app.buttons["Take Photo"].exists)
+        XCTAssertFalse(app.buttons["Photo Library"].exists)
+        XCTAssertFalse(app.staticTexts["Mood (optional)"].exists)
+
+        app.buttons["Add today's photo"].tap()
+        XCTAssertTrue(app.buttons["Take Photo"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Photo Library"].exists)
+        app.buttons["Take Photo"].tap()
+        XCTAssertTrue(app.staticTexts["Camera Unavailable"].waitForExistence(timeout: 5))
+        app.buttons["Back"].tap()
+        XCTAssertTrue(composerTitle.waitForExistence(timeout: 5))
 
         app.buttons["Cancel"].tap()
         XCTAssertTrue(petHomeTitle.waitForExistence(timeout: 5))
