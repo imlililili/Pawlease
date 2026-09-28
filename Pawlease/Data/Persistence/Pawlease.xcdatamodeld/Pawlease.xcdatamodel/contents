@@ -20,6 +20,7 @@
         <attribute name="ownerProfileID" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
         <attribute name="timezoneIdentifier" optional="YES" attributeType="String"/>
         <relationship name="dailyPosts" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="DailyPostEntity" inverseName="circle" inverseEntity="DailyPostEntity"/>
+        <relationship name="diaryEntries" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="DiaryEntryEntity" inverseName="circle" inverseEntity="DiaryEntryEntity"/>
         <relationship name="members" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="MemberEntity" inverseName="circle" inverseEntity="MemberEntity"/>
         <relationship name="pet" optional="YES" maxCount="1" deletionRule="Cascade" destinationEntity="PetEntity" inverseName="circle" inverseEntity="PetEntity"/>
     </entity>
@@ -80,6 +81,45 @@
         <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
         <relationship name="comment" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="CommentEntity" inverseName="commentReactions" inverseEntity="CommentEntity"/>
     </entity>
+    <entity name="DiaryEntryEntity" representedClassName="DiaryEntryEntity" syncable="YES" codeGenerationType="class">
+        <attribute name="authorAvatarSnapshot" optional="YES" attributeType="String"/>
+        <attribute name="authorNameSnapshot" optional="YES" attributeType="String"/>
+        <attribute name="authorProfileID" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="body" optional="YES" attributeType="String"/>
+        <attribute name="createdAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="deletedAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="expiresAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="isSoftDeleted" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="visibilityDuration" optional="YES" attributeType="String"/>
+        <relationship name="circle" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="CircleEntity" inverseName="diaryEntries" inverseEntity="CircleEntity"/>
+        <relationship name="comments" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="DiaryCommentEntity" inverseName="diaryEntry" inverseEntity="DiaryCommentEntity"/>
+        <relationship name="reactions" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="DiaryReactionEntity" inverseName="diaryEntry" inverseEntity="DiaryReactionEntity"/>
+    </entity>
+    <entity name="DiaryCommentEntity" representedClassName="DiaryCommentEntity" syncable="YES" codeGenerationType="class">
+        <attribute name="authorNameSnapshot" optional="YES" attributeType="String"/>
+        <attribute name="authorProfileID" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="body" optional="YES" attributeType="String"/>
+        <attribute name="createdAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="isRemoved" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <relationship name="commentReactions" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="DiaryCommentReactionEntity" inverseName="diaryComment" inverseEntity="DiaryCommentReactionEntity"/>
+        <relationship name="diaryEntry" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="DiaryEntryEntity" inverseName="comments" inverseEntity="DiaryEntryEntity"/>
+    </entity>
+    <entity name="DiaryReactionEntity" representedClassName="DiaryReactionEntity" syncable="YES" codeGenerationType="class">
+        <attribute name="authorProfileID" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="createdAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="emoji" optional="YES" attributeType="String"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <relationship name="diaryEntry" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="DiaryEntryEntity" inverseName="reactions" inverseEntity="DiaryEntryEntity"/>
+    </entity>
+    <entity name="DiaryCommentReactionEntity" representedClassName="DiaryCommentReactionEntity" syncable="YES" codeGenerationType="class">
+        <attribute name="authorProfileID" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="createdAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="emoji" optional="YES" attributeType="String"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <relationship name="diaryComment" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="DiaryCommentEntity" inverseName="commentReactions" inverseEntity="DiaryCommentEntity"/>
+    </entity>
     <configuration name="Private" usedWithCloudKit="YES">
         <memberEntity name="UserProfileEntity"/>
         <memberEntity name="PendingPostDraftEntity"/>
@@ -92,6 +132,10 @@
         <memberEntity name="CommentEntity"/>
         <memberEntity name="PostReactionEntity"/>
         <memberEntity name="CommentReactionEntity"/>
+        <memberEntity name="DiaryEntryEntity"/>
+        <memberEntity name="DiaryCommentEntity"/>
+        <memberEntity name="DiaryReactionEntity"/>
+        <memberEntity name="DiaryCommentReactionEntity"/>
     </configuration>
     <elements>
         <element name="UserProfileEntity" positionX="-380" positionY="-360" width="128" height="89"/>
@@ -103,5 +147,9 @@
         <element name="CommentEntity" positionX="20" positionY="60" width="128" height="149"/>
         <element name="PostReactionEntity" positionX="-360" positionY="60" width="128" height="104"/>
         <element name="CommentReactionEntity" positionX="220" positionY="180" width="128" height="104"/>
+        <element name="DiaryEntryEntity" positionX="-380" positionY="60" width="128" height="239"/>
+        <element name="DiaryCommentEntity" positionX="-540" positionY="180" width="128" height="149"/>
+        <element name="DiaryReactionEntity" positionX="-540" positionY="60" width="128" height="104"/>
+        <element name="DiaryCommentReactionEntity" positionX="-540" positionY="300" width="128" height="104"/>
     </elements>
 </model>
