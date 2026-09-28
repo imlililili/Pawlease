@@ -31,7 +31,7 @@ struct DiaryCommentRow: View {
                 DiaryReactionSummaryView(items: comment.reactionSummary)
             } else {
                 HStack {
-                    DiaryReactionEntryField(
+                    DiaryReactionButton(
                         currentReactionEmoji: comment.currentMemberReactionEmoji,
                         onSubmit: onReact,
                         onRemove: onRemoveReaction

@@ -124,9 +124,8 @@ final class DiaryEntryDetailViewModel {
         }
     }
 
-    /// `rawEmoji` comes straight from a plain system-keyboard text field —
-    /// validated here (via `DiaryReactionEmoji`) before ever reaching the
-    /// Use Case, exactly like every other Domain value type in this app.
+    /// `rawEmoji` comes from the reaction button's system-keyboard input
+    /// receiver and is validated here before reaching the Use Case.
     func reactToEntry(withRawEmoji rawEmoji: String) async {
         do {
             let emoji = try DiaryReactionEmoji(rawEmoji)

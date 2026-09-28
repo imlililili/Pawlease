@@ -74,7 +74,7 @@ struct DiaryEntryDetailView: View {
                     }
 
                     VStack(alignment: .leading, spacing: 6) {
-                        DiaryReactionEntryField(
+                        DiaryReactionButton(
                             currentReactionEmoji: state.currentMemberEntryReactionEmoji,
                             onSubmit: { emoji in Task { await viewModel.reactToEntry(withRawEmoji: emoji) } },
                             onRemove: { Task { await viewModel.reactToEntry(withRawEmoji: state.currentMemberEntryReactionEmoji ?? "") } }
