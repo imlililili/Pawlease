@@ -34,6 +34,11 @@ struct PetHomeViewModelMembershipTests {
         let publishDailyMomentUseCase = PublishDailyMomentUseCase(momentRepository: momentRepo, clock: clock)
         let photoProcessingService = PhotoProcessingService()
 
+        let diaryEntryRepo = InMemoryDiaryEntryRepository()
+        let diaryCommentRepo = InMemoryDiaryCommentRepository()
+        let diaryReactionRepo = InMemoryDiaryReactionRepository()
+        let diaryCommentReactionRepo = InMemoryDiaryCommentReactionRepository()
+
         return PetHomeViewModel(
             loadPetHomeUseCase: loadPetHomeUseCase,
             loadTodayMomentsUseCase: LoadTodayMomentsUseCase(momentRepository: momentRepo),
@@ -88,6 +93,23 @@ struct PetHomeViewModelMembershipTests {
                 memberRepository: memberRepo,
                 momentRepository: momentRepo
             ),
+            publishDiaryEntryUseCase: PublishDiaryEntryUseCase(diaryEntryRepository: diaryEntryRepo, clock: clock),
+            loadActiveDiaryFeedUseCase: LoadActiveDiaryFeedUseCase(
+                diaryEntryRepository: diaryEntryRepo, diaryCommentRepository: diaryCommentRepo,
+                diaryReactionRepository: diaryReactionRepo, clock: clock
+            ),
+            loadMyDiaryArchiveUseCase: LoadMyDiaryArchiveUseCase(diaryEntryRepository: diaryEntryRepo, clock: clock),
+            loadDiaryDetailUseCase: LoadDiaryDetailUseCase(
+                diaryEntryRepository: diaryEntryRepo, diaryCommentRepository: diaryCommentRepo,
+                diaryReactionRepository: diaryReactionRepo, diaryCommentReactionRepository: diaryCommentReactionRepo
+            ),
+            addDiaryCommentUseCase: AddDiaryCommentUseCase(
+                diaryCommentRepository: diaryCommentRepo, diaryEntryRepository: diaryEntryRepo, clock: clock
+            ),
+            reactToDiaryEntryUseCase: ReactToDiaryEntryUseCase(diaryReactionRepository: diaryReactionRepo, clock: clock),
+            reactToDiaryCommentUseCase: ReactToDiaryCommentUseCase(diaryCommentReactionRepository: diaryCommentReactionRepo, clock: clock),
+            deleteDiaryEntryUseCase: DeleteDiaryEntryUseCase(diaryEntryRepository: diaryEntryRepo, clock: clock),
+            screenCaptureStateProviding: MockScreenCaptureStateProvider(),
             clock: clock
         )
     }
