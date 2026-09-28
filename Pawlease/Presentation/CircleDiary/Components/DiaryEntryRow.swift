@@ -5,7 +5,21 @@ import SwiftUI
 /// expiration label, comment count, and reaction summary.
 struct DiaryEntryRow: View {
     let item: CircleDiaryFeedViewState.EntryItem
-    let isShielded: Bool
+    /// Read directly here, in this row's own body — not precomputed by an
+    /// ancestor and passed down as a `Bool`. `DiaryPrivacyMonitor` updates
+    /// live as capture/foreground state changes; if an ancestor like
+    /// `CircleDiaryFeedView` read `shouldShieldTimedContent` itself, every
+    /// such tick would re-evaluate that ancestor's entire body — including
+    /// the `.navigationDestination(for: DiaryEntryRoute.self)` it owns,
+    /// causing SwiftUI to re-invoke that destination closure while a push
+    /// was still settling. Confirmed via direct instrumentation: this
+    /// produced two separate destination view constructions for one push
+    /// and made the navigation stack unable to stay pushed. Scoping the
+    /// read to this leaf view keeps `@Observable`'s dependency tracking
+    /// local to the row, so only the row re-renders on a shield tick.
+    let privacyMonitor: DiaryPrivacyMonitor
+
+    private var isShielded: Bool { privacyMonitor.shouldShieldTimedContent }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {

@@ -58,6 +58,11 @@ struct PetHomeView: View {
                     PostDetailView(viewModel: postDetailViewModel)
                 }
             }
+            .navigationDestination(for: CircleDiaryRoute.self) { _ in
+                if let diaryFeedViewModel = viewModel.makeCircleDiaryFeedViewModel() {
+                    CircleDiaryFeedView(viewModel: diaryFeedViewModel)
+                }
+            }
     }
 
     private func handleComposerDismiss() {
@@ -110,10 +115,8 @@ struct PetHomeView: View {
                 .controlSize(.large)
                 .accessibilityHint("Opens the Moment composer to take a photo or choose one from your library.")
 
-                if let diaryFeedViewModel = viewModel.makeCircleDiaryFeedViewModel() {
-                    NavigationLink {
-                        CircleDiaryFeedView(viewModel: diaryFeedViewModel)
-                    } label: {
+                if viewModel.makeCircleDiaryFeedViewModel() != nil {
+                    NavigationLink(value: CircleDiaryRoute()) {
                         Label("Circle Diary", systemImage: "text.bubble.fill")
                             .font(.headline)
                             .frame(maxWidth: .infinity)

@@ -93,6 +93,18 @@ final class PetHomeViewModel {
     private let deleteDiaryEntryUseCase: DeleteDiaryEntryUseCase
     private let screenCaptureStateProviding: ScreenCaptureStateProviding
     private let clock: ClockProviding
+    /// Memoized by `makeCircleDiaryFeedViewModel()` so Pet Home's push to
+    /// Circle Diary stays backed by one stable `CircleDiaryFeedViewModel`
+    /// instance for the life of this screen, rather than a fresh one on
+    /// every `PetHomeView.body` re-evaluation (remote-change pulses, cloud
+    /// sync events, scene-phase changes). A closure-based `NavigationLink`
+    /// constructs its destination eagerly on every such re-render; without
+    /// this cache, that meant a brand-new `CircleDiaryFeedView` identity —
+    /// and a freshly re-registered `.navigationDestination(for:
+    /// DiaryEntryRoute.self)` — while the user was still pushed into it,
+    /// which is what produced the "declared earlier on the stack" warning
+    /// and the inability to stay on the Diary screen.
+    private var diaryFeedViewModel: CircleDiaryFeedViewModel?
     /// Held only to forward to `CircleSettingsView` when constructed — this
     /// ViewModel never calls CloudKit APIs on it directly.
     let cloudSharingControllerProvider: CloudSharingControllerProviding
@@ -371,9 +383,14 @@ final class PetHomeViewModel {
     /// Builds the Circle Diary feed — a separate, text-only social surface
     /// from the Daily Moment flow above. `nil` until the Circle snapshot has
     /// loaded, matching every other `make*ViewModel()` factory here.
+    ///
+    /// Returns the same memoized instance on every call after the first —
+    /// see `diaryFeedViewModel`'s doc comment for why that stability matters
+    /// for the `NavigationLink` that pushes it from `PetHomeView`.
     func makeCircleDiaryFeedViewModel() -> CircleDiaryFeedViewModel? {
+        if let diaryFeedViewModel { return diaryFeedViewModel }
         guard let snapshot else { return nil }
-        return CircleDiaryFeedViewModel(
+        let viewModel = CircleDiaryFeedViewModel(
             circleID: snapshot.circle.id,
             currentMember: snapshot.currentMember,
             loadActiveDiaryFeedUseCase: loadActiveDiaryFeedUseCase,
@@ -387,6 +404,8 @@ final class PetHomeViewModel {
             screenCaptureStateProviding: screenCaptureStateProviding,
             clock: clock
         )
+        diaryFeedViewModel = viewModel
+        return viewModel
     }
 
     func makeJoinCircleViewModel() -> JoinCircleViewModel {

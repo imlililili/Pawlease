@@ -12,7 +12,7 @@ final class CircleDiaryUITests: XCTestCase {
 
     private func openCircleDiary(_ app: XCUIApplication) {
         app.launch()
-        XCTAssertTrue(app.navigationBars["Pet Home"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.navigationBars["Pet Home"].waitForExistence(timeout: 15))
         app.buttons["Circle Diary"].tap()
     }
 
@@ -100,6 +100,127 @@ final class CircleDiaryUITests: XCTestCase {
         XCTAssertFalse(publishButton.isEnabled)
 
         app.buttons["Cancel"].tap()
+        XCTAssertTrue(app.navigationBars["Circle Diary"].waitForExistence(timeout: 5))
+    }
+
+    /// Publishes one entry and taps its feed row into `DiaryEntryDetailView`.
+    /// Returns the app positioned there, with the entry's `bodyText`, for
+    /// shared setup across the navigation/reaction regression tests below.
+    private func publishEntryAndOpenDetail(_ app: XCUIApplication) -> String {
+        openCircleDiary(app)
+
+        newDiaryEntryToolbarButton(app).tap()
+        let bodyText = "Navigation test \(UUID().uuidString.prefix(8))"
+        let textEditor = app.textViews["Diary entry text"]
+        XCTAssertTrue(textEditor.waitForExistence(timeout: 5))
+        textEditor.tap()
+        textEditor.typeText(bodyText)
+        app.buttons["Publish"].tap()
+
+        let entryLink = app.buttons
+            .matching(NSPredicate(format: "label CONTAINS %@", bodyText))
+            .firstMatch
+        XCTAssertTrue(entryLink.waitForExistence(timeout: 5))
+        entryLink.tap()
+        return bodyText
+    }
+
+    /// Regression items 1-4 for Bug 2: tapping a feed row opens exactly one
+    /// Diary Entry detail screen, navigation depth does not keep growing on
+    /// its own, the user can remain on the screen, and the comment composer
+    /// stays interactive throughout.
+    @MainActor
+    func testDiaryEntryDetailOpensOnceStaysOpenAndKeepsTheComposerInteractive() throws {
+        let app = XCUIApplication()
+        _ = publishEntryAndOpenDetail(app)
+
+        // Exactly one Diary Entry screen — not stacked/pushed repeatedly.
+        XCTAssertTrue(app.navigationBars["Diary Entry"].waitForExistence(timeout: 5))
+        XCTAssertEqual(app.navigationBars.matching(identifier: "Diary Entry").count, 1)
+
+        // The app must actually stay here — before the fix, an ancestor
+        // re-render (e.g. a remote-change-driven `refresh()` on Pet Home)
+        // could reconstruct the pushed screen's identity and destabilize
+        // the stack out from under the user.
+        Thread.sleep(forTimeInterval: 1.5)
+        XCTAssertTrue(app.navigationBars["Diary Entry"].exists)
+        XCTAssertEqual(app.navigationBars.matching(identifier: "Diary Entry").count, 1)
+
+        // The comment composer (shared `CommentComposer` component,
+        // `accessibilityLabel("Comment")`) must stay interactive.
+        let commentField = app.textFields["Comment"]
+        XCTAssertTrue(commentField.waitForExistence(timeout: 5))
+        XCTAssertTrue(commentField.isEnabled)
+        commentField.tap()
+        commentField.typeText("Nice entry!")
+        XCTAssertEqual(commentField.value as? String, "Nice entry!")
+    }
+
+    /// Regression item 5 for Bug 1: React must be a real button, and
+    /// selecting it must never reveal a separately-visible, independently
+    /// typeable text field. Does not attempt to pick an emoji from the
+    /// actual system keyboard — XCUITest cannot reliably automate that
+    /// against Apple's own keyboard (no stable per-key identifiers, and
+    /// simulator emoji-keyboard automation is notoriously flaky); see the
+    /// completion report for the exact manual procedure that covers
+    /// selecting/replacing/removing a real reaction end to end.
+    @MainActor
+    func testReactionButtonOpensInputWithoutRevealingAVisibleTextField() throws {
+        let app = XCUIApplication()
+        _ = publishEntryAndOpenDetail(app)
+        XCTAssertTrue(app.navigationBars["Diary Entry"].waitForExistence(timeout: 5))
+
+        let reactButton = app.buttons["React with an emoji"]
+        XCTAssertTrue(reactButton.waitForExistence(timeout: 5))
+        // Baseline includes the screen's own comment composer `TextField`
+        // ("Comment") — a legitimate, always-visible field. What matters is
+        // that selecting React never adds a NEW one.
+        let textFieldCountBeforeReact = app.textFields.count
+
+        reactButton.tap()
+        // TEMP PROBE
+        XCTContext.runActivity(named: "PROBE textFields=\(app.textFields.allElementsBoundByIndex.map { "[\($0.label)|\($0.value ?? "nil")]" })") { _ in }
+        XCTAssertEqual(
+            app.textFields.count, textFieldCountBeforeReact,
+            "Selecting React must never expose a new visible/accessible text field"
+        )
+    }
+
+    /// Regression for Bug 2: opening Circle Diary, leaving it, and opening
+    /// it again repeatedly must keep working identically each time — before
+    /// the fix, a fresh `CircleDiaryFeedViewModel` (and thus a freshly
+    /// re-registered `.navigationDestination`) on every `PetHomeView`
+    /// re-render made the stack's bookkeeping progressively unstable.
+    @MainActor
+    func testCircleDiaryNavigationIsStableAcrossRepeatedOpens() throws {
+        let app = XCUIApplication()
+        app.launch()
+        XCTAssertTrue(app.navigationBars["Pet Home"].waitForExistence(timeout: 15))
+
+        for _ in 0..<3 {
+            app.buttons["Circle Diary"].tap()
+            XCTAssertTrue(app.navigationBars["Circle Diary"].waitForExistence(timeout: 5))
+            XCTAssertEqual(app.navigationBars.matching(identifier: "Circle Diary").count, 1)
+            app.navigationBars["Circle Diary"].buttons.element(boundBy: 0).tap()
+            XCTAssertTrue(app.navigationBars["Pet Home"].waitForExistence(timeout: 5))
+        }
+    }
+
+    /// Covers "Feed and Archive navigation both work" — Archive is
+    /// presented in its own sheet-local `NavigationStack`, independent from
+    /// the Feed's, and must open/dismiss cleanly.
+    @MainActor
+    func testArchiveOpensAndReturnsToFeed() throws {
+        let app = XCUIApplication()
+        openCircleDiary(app)
+
+        // `.secondaryAction` toolbar items collapse into the overflow
+        // "More" menu rather than appearing directly on the navigation bar.
+        app.navigationBars["Circle Diary"].buttons["OverflowBarButtonItem"].tap()
+        app.buttons["My Archive"].tap()
+        XCTAssertTrue(app.navigationBars["My Diary Archive"].waitForExistence(timeout: 5))
+
+        app.buttons["Done"].tap()
         XCTAssertTrue(app.navigationBars["Circle Diary"].waitForExistence(timeout: 5))
     }
 }

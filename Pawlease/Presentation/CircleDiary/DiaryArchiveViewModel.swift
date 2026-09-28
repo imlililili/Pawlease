@@ -28,6 +28,9 @@ final class DiaryArchiveViewModel {
     private let reactToDiaryCommentUseCase: ReactToDiaryCommentUseCase
     private let screenCaptureStateProviding: ScreenCaptureStateProviding
     private let clock: ClockProviding
+    /// Memoized per entry by `makeDetailViewModel(entryID:)` — same fix, same
+    /// reasoning as `CircleDiaryFeedViewModel.detailViewModelsByEntryID`.
+    private var detailViewModelsByEntryID: [UUID: DiaryEntryDetailViewModel] = [:]
 
     init(
         circleID: UUID,
@@ -69,7 +72,8 @@ final class DiaryArchiveViewModel {
     }
 
     func makeDetailViewModel(entryID: UUID) -> DiaryEntryDetailViewModel {
-        DiaryEntryDetailViewModel(
+        if let existing = detailViewModelsByEntryID[entryID] { return existing }
+        let viewModel = DiaryEntryDetailViewModel(
             entryID: entryID,
             currentMember: currentMember,
             loadDiaryDetailUseCase: loadDiaryDetailUseCase,
@@ -80,5 +84,7 @@ final class DiaryArchiveViewModel {
             screenCaptureStateProviding: screenCaptureStateProviding,
             clock: clock
         )
+        detailViewModelsByEntryID[entryID] = viewModel
+        return viewModel
     }
 }

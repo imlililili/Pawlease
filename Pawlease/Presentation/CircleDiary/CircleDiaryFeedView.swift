@@ -94,7 +94,7 @@ struct CircleDiaryFeedView: View {
         List {
             ForEach(viewModel.viewState.entries) { item in
                 NavigationLink(value: DiaryEntryRoute(entryID: item.id)) {
-                    DiaryEntryRow(item: item, isShielded: viewModel.privacyMonitor.shouldShieldTimedContent)
+                    DiaryEntryRow(item: item, privacyMonitor: viewModel.privacyMonitor)
                 }
             }
         }

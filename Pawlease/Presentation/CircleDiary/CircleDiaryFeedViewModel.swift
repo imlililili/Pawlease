@@ -37,6 +37,9 @@ final class CircleDiaryFeedViewModel {
     private let loadMyDiaryArchiveUseCase: LoadMyDiaryArchiveUseCase
     private let screenCaptureStateProviding: ScreenCaptureStateProviding
     private let clock: ClockProviding
+    /// Memoized per entry by `makeDetailViewModel(entryID:)` — see its doc
+    /// comment for why a fresh instance per call destabilizes the stack.
+    private var detailViewModelsByEntryID: [UUID: DiaryEntryDetailViewModel] = [:]
 
     init(
         circleID: UUID,
@@ -101,8 +104,20 @@ final class CircleDiaryFeedViewModel {
         )
     }
 
+    /// Returns the same memoized instance (keyed by `entryID`) on every call
+    /// after the first. `.navigationDestination(for:)`'s closure is not
+    /// guaranteed to run exactly once per push — any ancestor re-render that
+    /// touches `@Observable` state read by `CircleDiaryFeedView.body` (e.g.
+    /// `privacyMonitor` ticking) can make SwiftUI re-invoke it while the
+    /// route is still active. A non-idempotent factory there produced two
+    /// competing `DiaryEntryDetailView`/`DiaryEntryDetailViewModel`
+    /// identities for one push — confirmed via direct instrumentation — and
+    /// having two made the stack's own bookkeeping unstable, popping the
+    /// user back out. Same fix, same reasoning as `diaryFeedViewModel` in
+    /// `PetHomeViewModel`.
     func makeDetailViewModel(entryID: UUID) -> DiaryEntryDetailViewModel {
-        DiaryEntryDetailViewModel(
+        if let existing = detailViewModelsByEntryID[entryID] { return existing }
+        let viewModel = DiaryEntryDetailViewModel(
             entryID: entryID,
             currentMember: currentMember,
             loadDiaryDetailUseCase: loadDiaryDetailUseCase,
@@ -113,6 +128,8 @@ final class CircleDiaryFeedViewModel {
             screenCaptureStateProviding: screenCaptureStateProviding,
             clock: clock
         )
+        detailViewModelsByEntryID[entryID] = viewModel
+        return viewModel
     }
 
     func makeArchiveViewModel() -> DiaryArchiveViewModel {
