@@ -1,7 +1,10 @@
 import SwiftUI
 
-/// Placeholder pet artwork keyed to life stage. Final animated artwork is
-/// deferred to a later phase.
+/// The small per-life-stage pet emoji — shown only beside the pet's name
+/// (e.g. "🐣 Mochi"), never as standalone hero content. The hero square
+/// itself shows Today's Moment's photo (see `PetArtworkStatusView`); this
+/// view is deliberately just the emoji glyph so the caller controls size,
+/// placement, and accessibility treatment.
 struct PetArtworkView: View {
     let stage: PetLifeStage
 
@@ -15,12 +18,6 @@ struct PetArtworkView: View {
     }
 
     var body: some View {
-        ZStack {
-            Circle()
-                .fill(Theme.petArtworkBackground)
-            Text(emoji)
-                .font(.system(size: 64))
-        }
-        .accessibilityHidden(true)
+        Text(emoji)
     }
 }
