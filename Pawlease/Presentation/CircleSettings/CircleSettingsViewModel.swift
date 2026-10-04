@@ -109,7 +109,8 @@ final class CircleSettingsViewModel {
             viewState = CircleSettingsViewState(
                 circleName: snapshot.circle.name,
                 petName: snapshot.pet.name,
-                memberNames: members.map(\.displayName),
+                timezoneIdentifier: snapshot.circle.timezoneIdentifier,
+                members: members,
                 accountAvailability: accountAvailability,
                 sharingState: sharingState,
                 lastUpdatedAt: clock.now
