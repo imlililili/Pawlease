@@ -33,8 +33,15 @@ final class PetHomeViewModel {
     private(set) var syncStatus: CircleSyncStatus = .localChangesSaved
     private(set) var pendingSharedDraft: PendingPostDraft?
     private(set) var demoCheckInState: DemoCheckInState = .idle
+    /// Every member of the Circle, for the overlapping avatar stack at the
+    /// top of Pet Home. Best-effort — a failure loading this never fails
+    /// the whole screen (the avatar stack just stays empty).
+    private(set) var members: [CircleMember] = []
+    /// The single newest active Diary entry, for the Circle Diary preview
+    /// row. `nil` while loading or once the Circle Diary has no active
+    /// entries — the preview section simply doesn't render its row then.
+    private(set) var latestDiaryPreview: LoadActiveDiaryFeedUseCase.FeedItem?
     var isComposerPresented = false
-    var isJoinCirclePresented = false
 
     var viewState: PetHomeViewState? {
         snapshot.map(PetHomeViewState.init)
@@ -259,6 +266,9 @@ final class PetHomeViewModel {
             await importPendingSharesUseCase.execute()
             pendingSharedDraft = (try? await loadPendingDraftsUseCase.execute())?.first
 
+            members = (try? await loadCircleMembersUseCase.execute(circleID: snapshot.circle.id)) ?? []
+            latestDiaryPreview = (try? await loadActiveDiaryFeedUseCase.execute(circleID: snapshot.circle.id))?.first
+
             if snapshot.canViewTodayFeed {
                 do {
                     todayMoments = try await loadTodayMomentsUseCase.execute(
@@ -393,6 +403,8 @@ final class PetHomeViewModel {
         let viewModel = CircleDiaryFeedViewModel(
             circleID: snapshot.circle.id,
             currentMember: snapshot.currentMember,
+            circleName: snapshot.circle.name,
+            petName: snapshot.pet.name,
             loadActiveDiaryFeedUseCase: loadActiveDiaryFeedUseCase,
             publishDiaryEntryUseCase: publishDiaryEntryUseCase,
             loadDiaryDetailUseCase: loadDiaryDetailUseCase,

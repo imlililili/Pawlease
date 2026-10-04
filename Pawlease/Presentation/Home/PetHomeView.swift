@@ -25,21 +25,19 @@ struct PetHomeView: View {
                 }
             }
             .toolbar {
+                // Settings is the only Pet Home toolbar control — Invite
+                // Code (create/copy/share/revoke/regenerate) and Join a
+                // Circle both live inside Circle Settings now, so there's
+                // no second, redundant invite entry point here.
                 ToolbarItem(placement: .primaryAction) {
                     NavigationLink {
                         CircleSettingsView(
                             viewModel: viewModel.makeCircleSettingsViewModel(),
-                            cloudSharingControllerProvider: viewModel.cloudSharingControllerProvider
+                            cloudSharingControllerProvider: viewModel.cloudSharingControllerProvider,
+                            makeJoinCircleViewModel: viewModel.makeJoinCircleViewModel
                         )
                     } label: {
                         Label("Circle Settings", systemImage: "gearshape")
-                    }
-                }
-                ToolbarItem(placement: .primaryAction) {
-                    Button {
-                        viewModel.isJoinCirclePresented = true
-                    } label: {
-                        Label("Join a Circle", systemImage: "person.badge.plus")
                     }
                 }
             }
@@ -49,9 +47,6 @@ struct PetHomeView: View {
                         PostComposerView(viewModel: composerViewModel)
                     }
                 }
-            }
-            .sheet(isPresented: $viewModel.isJoinCirclePresented) {
-                JoinCircleView(viewModel: viewModel.makeJoinCircleViewModel())
             }
             .navigationDestination(for: UUID.self) { momentID in
                 if let postDetailViewModel = viewModel.makePostDetailViewModel(momentID: momentID) {
@@ -94,9 +89,14 @@ struct PetHomeView: View {
 
     private func loadedContent(state: PetHomeViewState) -> some View {
         ScrollView {
-            VStack(spacing: 20) {
-                PetStateCard(state: state)
-                ContributorProgressCard(state: state)
+            VStack(alignment: .leading, spacing: PawleaseTheme.sectionSpacing) {
+                CircleHeaderView(circleName: state.circleName, members: viewModel.members)
+
+                PetArtworkStatusView(state: state, latestVisibleMoment: viewModel.todayMoments.first)
+                    .frame(maxWidth: .infinity)
+
+                PetSummaryRow(state: state)
+
                 SyncStatusBadge(status: viewModel.syncStatus)
 
                 if let pendingSharedDraft = viewModel.pendingSharedDraft {
@@ -107,23 +107,16 @@ struct PetHomeView: View {
                     composerViewModel = viewModel.makeComposerViewModel()
                     viewModel.presentComposer()
                 } label: {
-                    Label("Take Today's Photo", systemImage: "camera.fill")
+                    Label("Today's Moment", systemImage: "camera.fill")
                         .font(.headline)
                         .frame(maxWidth: .infinity)
+                        .frame(minHeight: 44)
                 }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
+                .buttonStyle(PawleasePrimaryButtonStyle())
                 .accessibilityHint("Opens the Moment composer to take a photo or choose one from your library.")
 
                 if viewModel.makeCircleDiaryFeedViewModel() != nil {
-                    NavigationLink(value: CircleDiaryRoute()) {
-                        Label("Circle Diary", systemImage: "text.bubble.fill")
-                            .font(.headline)
-                            .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.bordered)
-                    .controlSize(.large)
-                    .accessibilityHint("Opens the private, text-only Circle Diary feed — separate from today's photo.")
+                    CircleDiaryPreviewSection(circleName: state.circleName, latestEntry: viewModel.latestDiaryPreview)
                 }
 
                 #if DEBUG
@@ -132,8 +125,9 @@ struct PetHomeView: View {
 
                 feedSection(state: state)
             }
-            .padding()
+            .padding(PawleaseTheme.pagePadding)
         }
+        .background(PawleaseTheme.background)
     }
 
     private func sharedDraftBanner(for draft: PendingPostDraft) -> some View {
