@@ -44,12 +44,26 @@ final class DiaryComposerViewModel {
         !bodyText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
+    /// Explains the currently-selected visibility option — pure formatting
+    /// of `DiaryVisibilityDuration`, never a business rule itself.
+    var visibilityExplanation: String {
+        switch visibilityDuration {
+        case .oneDay: "Visible for 24 hours, then moves to My Archive. Expired entries keep their comments and reactions."
+        case .threeDays: "Visible for 3 days, then moves to My Archive. Expired entries keep their comments and reactions."
+        case .sevenDays: "Visible for 7 days, then moves to My Archive. Expired entries keep their comments and reactions."
+        case .permanent: "Stays in the shared Circle Diary feed until you delete it."
+        }
+    }
+
+    let author: CircleMember
+    /// For the "Posting to <circleName>" caption — presentation-only.
+    let circleName: String
     private let circleID: UUID
-    private let author: CircleMember
     private let publishDiaryEntryUseCase: PublishDiaryEntryUseCase
 
-    init(circleID: UUID, author: CircleMember, publishDiaryEntryUseCase: PublishDiaryEntryUseCase) {
+    init(circleID: UUID, circleName: String, author: CircleMember, publishDiaryEntryUseCase: PublishDiaryEntryUseCase) {
         self.circleID = circleID
+        self.circleName = circleName
         self.author = author
         self.publishDiaryEntryUseCase = publishDiaryEntryUseCase
     }

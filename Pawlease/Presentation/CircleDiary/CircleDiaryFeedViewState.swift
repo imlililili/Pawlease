@@ -6,6 +6,7 @@ import Foundation
 struct CircleDiaryFeedViewState: Equatable {
     struct EntryItem: Equatable, Identifiable {
         let id: UUID
+        let authorProfileID: UUID
         let authorAvatarEmoji: String
         let authorName: String
         let createdAt: Date
@@ -14,6 +15,7 @@ struct CircleDiaryFeedViewState: Equatable {
         /// e.g. "Expires in 18h" — `nil` for a permanent entry.
         let expirationLabel: String?
         let commentCount: Int
+        let reactionCount: Int
         /// e.g. "❤️ 2  🌼 1" — `nil` when there are no reactions yet.
         let reactionSummaryLabel: String?
     }
@@ -24,6 +26,7 @@ struct CircleDiaryFeedViewState: Equatable {
         entries = items.map { item in
             EntryItem(
                 id: item.entry.id,
+                authorProfileID: item.entry.authorProfileID,
                 authorAvatarEmoji: item.entry.authorAvatarSnapshot,
                 authorName: item.entry.authorNameSnapshot,
                 createdAt: item.entry.createdAt,
@@ -31,6 +34,7 @@ struct CircleDiaryFeedViewState: Equatable {
                 isPermanent: item.entry.visibilityDuration == .permanent,
                 expirationLabel: DiaryExpirationFormatter.label(expiresAt: item.entry.expiresAt, now: now),
                 commentCount: item.commentCount,
+                reactionCount: item.reactions.count,
                 reactionSummaryLabel: DiaryReactionFormatter.summaryLabel(for: item.reactions.map(\.emoji))
             )
         }

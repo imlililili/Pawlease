@@ -1,10 +1,12 @@
 import SwiftUI
 
 /// One row in the Circle Diary feed — a clean vertical Threads/X-style row,
-/// not an oversized card: avatar emoji, name, relative timestamp, body,
-/// expiration label, comment count, and reaction summary.
+/// not an oversized card: avatar initials, name, relative timestamp, body,
+/// visibility badge, reaction summary, and comment count.
 struct DiaryEntryRow: View {
     let item: CircleDiaryFeedViewState.EntryItem
+    let isOwnEntry: Bool
+    let onDelete: () -> Void
     /// Read directly here, in this row's own body — not precomputed by an
     /// ancestor and passed down as a `Bool`. `DiaryPrivacyMonitor` updates
     /// live as capture/foreground state changes; if an ancestor like
@@ -22,23 +24,30 @@ struct DiaryEntryRow: View {
     private var isShielded: Bool { privacyMonitor.shouldShieldTimedContent }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(alignment: .top, spacing: 8) {
-                Text(item.authorAvatarEmoji)
-                    .font(.title3)
-                    .accessibilityHidden(true)
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .top, spacing: 10) {
+                AvatarView(name: item.authorName, identitySeed: item.authorProfileID.uuidString, diameter: 36)
+
                 VStack(alignment: .leading, spacing: 1) {
                     Text(item.authorName)
-                        .font(.subheadline.bold())
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(PawleaseTheme.textPrimary)
                     Text(item.createdAt, style: .relative)
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(PawleaseTheme.textSecondary)
                 }
                 Spacer()
-                if let expirationLabel = item.expirationLabel {
-                    Text(expirationLabel)
-                        .font(.caption2)
-                        .foregroundStyle(.orange)
+
+                if isOwnEntry {
+                    Menu {
+                        Button("Delete Entry", role: .destructive, action: onDelete)
+                    } label: {
+                        Image(systemName: "ellipsis")
+                            .foregroundStyle(PawleaseTheme.textSecondary)
+                            .frame(width: 44, height: 44)
+                            .contentShape(Rectangle())
+                    }
+                    .accessibilityLabel("More options for your entry")
                 }
             }
 
@@ -47,25 +56,44 @@ struct DiaryEntryRow: View {
             } else {
                 Text(item.bodyText)
                     .font(.body)
+                    .foregroundStyle(PawleaseTheme.textPrimary)
                     .lineLimit(6)
             }
 
-            HStack(spacing: 14) {
+            visibilityBadge
+
+            HStack(spacing: 16) {
+                if item.reactionCount > 0 {
+                    HStack(spacing: 6) {
+                        Image(systemName: "heart")
+                            .foregroundStyle(PawleaseTheme.textSecondary)
+                        if let reactionSummaryLabel = item.reactionSummaryLabel {
+                            Text(reactionSummaryLabel)
+                        }
+                    }
+                    .font(.caption)
+                    .foregroundStyle(PawleaseTheme.textSecondary)
+                }
+
                 Label("\(item.commentCount)", systemImage: "bubble.left")
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(PawleaseTheme.textSecondary)
                     .accessibilityLabel("\(item.commentCount) comment\(item.commentCount == 1 ? "" : "s")")
-                if let reactionSummaryLabel = item.reactionSummaryLabel {
-                    Text(reactionSummaryLabel)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
             }
         }
-        .padding(.vertical, 10)
+        .padding(.vertical, 12)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(
             "\(item.authorName), \(isShielded && !item.isPermanent ? "content hidden for privacy" : item.bodyText)"
         )
+    }
+
+    private var visibilityBadge: some View {
+        Text(item.expirationLabel ?? "Permanent")
+            .font(.caption.weight(.medium))
+            .foregroundStyle(PawleaseTheme.textSecondary)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 4)
+            .background(PawleaseTheme.divider.opacity(0.5), in: Capsule())
     }
 }
