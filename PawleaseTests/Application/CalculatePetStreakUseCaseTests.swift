@@ -27,4 +27,26 @@ struct CalculatePetStreakUseCaseTests {
 
         #expect(streak == 3)
     }
+
+    /// Required streak rule: a single survived day with no prior history —
+    /// the base case every longer streak builds on.
+    @Test func aSingleSurvivedDayWithNoHistoryProducesAOneDayStreak() {
+        let useCase = CalculatePetStreakUseCase()
+
+        let streak = useCase.execute(recentDaysDescending: [], todaySurvived: true)
+
+        #expect(streak == 1)
+    }
+
+    /// Required streak rule: yesterday survived and today survives → 2.
+    @Test func yesterdaySurvivingAndTodaySurvivingProducesATwoDayStreak() {
+        let useCase = CalculatePetStreakUseCase()
+        let recentDaysDescending = [
+            DailyOutcome(day: CircleDay(value: "2026-03-14"), survived: true)
+        ]
+
+        let streak = useCase.execute(recentDaysDescending: recentDaysDescending, todaySurvived: true)
+
+        #expect(streak == 2)
+    }
 }
