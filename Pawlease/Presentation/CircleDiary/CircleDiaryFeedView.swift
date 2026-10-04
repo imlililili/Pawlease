@@ -10,27 +10,23 @@ struct CircleDiaryFeedView: View {
 
     var body: some View {
         content
+            .background(PawleaseTheme.background)
             .navigationTitle("Circle Diary")
             .navigationBarTitleDisplayMode(.inline)
             .task { await viewModel.loadIfNeeded() }
             .task { await viewModel.privacyMonitor.startObserving() }
-            .refreshable { await viewModel.refresh() }
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button {
-                        composerViewModel = viewModel.makeComposerViewModel()
-                        viewModel.presentComposer()
-                    } label: {
-                        Label("New Diary Entry", systemImage: "square.and.pencil")
-                    }
-                }
-                ToolbarItem(placement: .secondaryAction) {
-                    Button {
                         viewModel.isArchivePresented = true
                     } label: {
-                        Label("My Archive", systemImage: "archivebox")
+                        Image(systemName: "archivebox")
                     }
+                    .accessibilityLabel("My Archive")
                 }
+            }
+            .safeAreaInset(edge: .bottom) {
+                newDiaryEntryButton
             }
             .sheet(isPresented: $viewModel.isComposerPresented, onDismiss: handleComposerDismiss) {
                 if let composerViewModel {
@@ -73,32 +69,65 @@ struct CircleDiaryFeedView: View {
                 Button("Try Again") { Task { await viewModel.refresh() } }
             }
         case .loaded:
-            if viewModel.viewState.entries.isEmpty {
-                ContentUnavailableView {
-                    Label("No Diary Entries Yet", systemImage: "text.bubble")
-                } description: {
-                    Text("Share the first thought with your Circle.")
-                } actions: {
-                    Button("New Diary Entry") {
-                        composerViewModel = viewModel.makeComposerViewModel()
-                        viewModel.presentComposer()
+            VStack(spacing: 0) {
+                introText
+                if viewModel.viewState.entries.isEmpty {
+                    ContentUnavailableView {
+                        Label("No Diary Entries Yet", systemImage: "text.bubble")
+                    } description: {
+                        Text("Share the first thought with your Circle.")
                     }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    feedList
                 }
-            } else {
-                feedList
             }
         }
+    }
+
+    private var introText: some View {
+        Text("A private text feed for the people who share \(viewModel.petName).")
+            .font(.subheadline)
+            .foregroundStyle(PawleaseTheme.textSecondary)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, PawleaseTheme.pagePadding)
+            .padding(.vertical, 14)
     }
 
     private var feedList: some View {
         List {
             ForEach(viewModel.viewState.entries) { item in
                 NavigationLink(value: DiaryEntryRoute(entryID: item.id)) {
-                    DiaryEntryRow(item: item, privacyMonitor: viewModel.privacyMonitor)
+                    DiaryEntryRow(
+                        item: item,
+                        isOwnEntry: item.authorProfileID == viewModel.currentMember.profileID,
+                        onDelete: { Task { await viewModel.deleteEntry(entryID: item.id) } },
+                        privacyMonitor: viewModel.privacyMonitor
+                    )
                 }
+                .listRowBackground(PawleaseTheme.background)
+                .listRowSeparatorTint(PawleaseTheme.divider)
             }
         }
         .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .refreshable { await viewModel.refresh() }
+    }
+
+    private var newDiaryEntryButton: some View {
+        Button {
+            composerViewModel = viewModel.makeComposerViewModel()
+            viewModel.presentComposer()
+        } label: {
+            Label("New Diary Entry", systemImage: "plus")
+                .font(.headline)
+                .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(PawleasePrimaryButtonStyle())
+        .padding(.horizontal, PawleaseTheme.pagePadding)
+        .padding(.top, 10)
+        .padding(.bottom, 4)
+        .background(.bar)
     }
 
     private func screenshotWarningBanner(message: String) -> some View {

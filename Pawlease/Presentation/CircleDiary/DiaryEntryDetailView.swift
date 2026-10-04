@@ -71,6 +71,7 @@ struct DiaryEntryDetailView: View {
                     } else {
                         Text(state.bodyText)
                             .font(.body)
+                            .foregroundStyle(PawleaseTheme.textPrimary)
                     }
 
                     VStack(alignment: .leading, spacing: 6) {
@@ -104,8 +105,10 @@ struct DiaryEntryDetailView: View {
                 .padding()
             }
             .refreshable { await viewModel.refresh() }
+            .background(PawleaseTheme.background)
 
             Divider()
+                .overlay(PawleaseTheme.divider)
 
             CommentComposer(
                 text: $viewModel.commentText,
@@ -116,6 +119,7 @@ struct DiaryEntryDetailView: View {
                 onSubmit: { Task { await viewModel.submitComment() } }
             )
             .padding()
+            .background(PawleaseTheme.background)
         }
     }
 
@@ -125,20 +129,21 @@ struct DiaryEntryDetailView: View {
 
     private func entryInfo(state: DiaryEntryDetailViewState) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 8) {
-                Text(state.authorAvatarEmoji)
+            HStack(spacing: 10) {
+                AvatarView(name: state.authorName, identitySeed: state.authorProfileID.uuidString, diameter: 40)
                 VStack(alignment: .leading, spacing: 1) {
                     Text(state.authorName)
                         .font(.headline)
+                        .foregroundStyle(PawleaseTheme.textPrimary)
                     Text(state.createdAt, style: .relative)
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(PawleaseTheme.textSecondary)
                 }
                 Spacer()
                 if let expirationLabel = state.expirationLabel {
                     Text(expirationLabel)
                         .font(.caption)
-                        .foregroundStyle(.orange)
+                        .foregroundStyle(PawleaseTheme.accentPrimary)
                 }
             }
         }
@@ -149,6 +154,7 @@ struct DiaryEntryDetailView: View {
     private func commentsSection(state: DiaryEntryDetailViewState) -> some View {
         Text("Comments")
             .font(.headline)
+            .foregroundStyle(PawleaseTheme.textPrimary)
 
         if state.comments.isEmpty {
             ContentUnavailableView {

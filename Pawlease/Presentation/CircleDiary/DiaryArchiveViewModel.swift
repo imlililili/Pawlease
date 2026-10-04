@@ -15,8 +15,20 @@ final class DiaryArchiveViewModel {
         case error(String)
     }
 
+    /// An archived entry paired with its comment count and reaction
+    /// summary — mirrors `LoadActiveDiaryFeedUseCase.FeedItem`'s shape for
+    /// the live feed, assembled here per entry via the same
+    /// `LoadDiaryDetailUseCase` the Detail screen already uses (archives
+    /// are typically small, so the per-entry lookup is cheap).
+    struct ArchivedEntryItem: Equatable, Identifiable {
+        let entry: DiaryEntry
+        let commentCount: Int
+        let reactions: [DiaryReaction]
+        var id: UUID { entry.id }
+    }
+
     private(set) var loadState: LoadState = .idle
-    private(set) var entries: [DiaryEntry] = []
+    private(set) var entries: [ArchivedEntryItem] = []
 
     private let circleID: UUID
     private let currentMember: CircleMember
@@ -64,7 +76,16 @@ final class DiaryArchiveViewModel {
     func refresh() async {
         loadState = .loading
         do {
-            entries = try await loadMyDiaryArchiveUseCase.execute(circleID: circleID, memberProfileID: currentMember.profileID)
+            let archivedEntries = try await loadMyDiaryArchiveUseCase.execute(circleID: circleID, memberProfileID: currentMember.profileID)
+            var items: [ArchivedEntryItem] = []
+            for entry in archivedEntries {
+                if let detail = try? await loadDiaryDetailUseCase.execute(entryID: entry.id) {
+                    items.append(ArchivedEntryItem(entry: entry, commentCount: detail.comments.filter { !$0.isRemoved }.count, reactions: detail.entryReactions))
+                } else {
+                    items.append(ArchivedEntryItem(entry: entry, commentCount: 0, reactions: []))
+                }
+            }
+            entries = items
             loadState = .loaded
         } catch {
             loadState = .error("We couldn't load your Archive. Please try again.")

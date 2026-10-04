@@ -1,9 +1,9 @@
 import SwiftUI
 
-/// "My Diary Archive": the current member's own expired timed entries.
-/// Read-only except that the author can still delete an archived entry —
-/// enforced by reusing the same `DiaryEntryDetailView`/ViewModel the shared
-/// feed uses, so there is no second, divergent detail implementation.
+/// "My Archive": the current member's own expired timed entries. Read-only
+/// except that the author can still delete an archived entry — enforced by
+/// reusing the same `DiaryEntryDetailView`/ViewModel the shared feed uses,
+/// so there is no second, divergent detail implementation.
 struct DiaryArchiveView: View {
     @State private var viewModel: DiaryArchiveViewModel
     @Environment(\.dismiss) private var dismiss
@@ -14,10 +14,10 @@ struct DiaryArchiveView: View {
 
     var body: some View {
         content
-            .navigationTitle("My Diary Archive")
+            .background(PawleaseTheme.background)
+            .navigationTitle("My Archive")
             .navigationBarTitleDisplayMode(.inline)
             .task { await viewModel.loadIfNeeded() }
-            .refreshable { await viewModel.refresh() }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Done") { dismiss() }
@@ -43,26 +43,37 @@ struct DiaryArchiveView: View {
                 Button("Try Again") { Task { await viewModel.refresh() } }
             }
         case .loaded:
-            if viewModel.entries.isEmpty {
-                ContentUnavailableView {
-                    Label("Nothing Archived Yet", systemImage: "archivebox")
-                } description: {
-                    Text("Timed Diary entries move here once they expire from the shared feed.")
-                }
-            } else {
-                List(viewModel.entries) { entry in
-                    NavigationLink(value: DiaryEntryRoute(entryID: entry.id)) {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(entry.body.value)
-                                .lineLimit(3)
-                            Text(entry.createdAt, style: .relative)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
+            VStack(spacing: 0) {
+                introText
+                if viewModel.entries.isEmpty {
+                    ContentUnavailableView {
+                        Label("Nothing Archived Yet", systemImage: "archivebox")
+                    } description: {
+                        Text("Timed Diary entries move here once they expire from the shared feed.")
                     }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    List(viewModel.entries) { item in
+                        NavigationLink(value: DiaryEntryRoute(entryID: item.id)) {
+                            DiaryArchiveEntryRow(item: item)
+                        }
+                        .listRowBackground(PawleaseTheme.background)
+                        .listRowSeparatorTint(PawleaseTheme.divider)
+                    }
+                    .listStyle(.plain)
+                    .scrollContentBackground(.hidden)
+                    .refreshable { await viewModel.refresh() }
                 }
-                .listStyle(.plain)
             }
         }
+    }
+
+    private var introText: some View {
+        Text("Your expired entries stay here with their comments and reactions.")
+            .font(.subheadline)
+            .foregroundStyle(PawleaseTheme.textSecondary)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, PawleaseTheme.pagePadding)
+            .padding(.vertical, 14)
     }
 }

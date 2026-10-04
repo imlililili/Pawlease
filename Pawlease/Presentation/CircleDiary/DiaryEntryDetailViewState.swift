@@ -21,6 +21,7 @@ struct DiaryEntryDetailViewState: Equatable {
         let currentMemberReactionEmoji: String?
     }
 
+    let authorProfileID: UUID
     let authorName: String
     let authorAvatarEmoji: String
     let bodyText: String
@@ -33,6 +34,7 @@ struct DiaryEntryDetailViewState: Equatable {
     let comments: [CommentItem]
 
     init(result: LoadDiaryDetailUseCase.Result, currentMemberProfileID: UUID, now: Date) {
+        authorProfileID = result.entry.authorProfileID
         authorName = result.entry.authorNameSnapshot
         authorAvatarEmoji = result.entry.authorAvatarSnapshot
         bodyText = result.entry.body.value

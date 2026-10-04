@@ -27,6 +27,11 @@ final class CircleDiaryFeedViewModel {
 
     let circleID: UUID
     let currentMember: CircleMember
+    let circleName: String
+    /// For the feed's introductory "A private text feed for the people who
+    /// share <petName>." description — presentation-only, never used for
+    /// any business rule.
+    let petName: String
     private let loadActiveDiaryFeedUseCase: LoadActiveDiaryFeedUseCase
     private let publishDiaryEntryUseCase: PublishDiaryEntryUseCase
     private let loadDiaryDetailUseCase: LoadDiaryDetailUseCase
@@ -44,6 +49,8 @@ final class CircleDiaryFeedViewModel {
     init(
         circleID: UUID,
         currentMember: CircleMember,
+        circleName: String,
+        petName: String,
         loadActiveDiaryFeedUseCase: LoadActiveDiaryFeedUseCase,
         publishDiaryEntryUseCase: PublishDiaryEntryUseCase,
         loadDiaryDetailUseCase: LoadDiaryDetailUseCase,
@@ -57,6 +64,8 @@ final class CircleDiaryFeedViewModel {
     ) {
         self.circleID = circleID
         self.currentMember = currentMember
+        self.circleName = circleName
+        self.petName = petName
         self.loadActiveDiaryFeedUseCase = loadActiveDiaryFeedUseCase
         self.publishDiaryEntryUseCase = publishDiaryEntryUseCase
         self.loadDiaryDetailUseCase = loadDiaryDetailUseCase
@@ -89,6 +98,19 @@ final class CircleDiaryFeedViewModel {
         isComposerPresented = true
     }
 
+    /// Deletes one of the current member's own entries directly from the
+    /// feed row's overflow menu. Authorization is still enforced by
+    /// `DeleteDiaryEntryUseCase`/the repository — this is only reachable
+    /// from the UI for the author's own rows in the first place.
+    func deleteEntry(entryID: UUID) async {
+        do {
+            try await deleteDiaryEntryUseCase.execute(entryID: entryID, requestingProfileID: currentMember.profileID)
+            await refresh()
+        } catch {
+            loadState = .error("We couldn't delete that entry. Please try again.")
+        }
+    }
+
     func handleComposerDismissed(didPublish: Bool) async {
         isComposerPresented = false
         if didPublish {
@@ -99,6 +121,7 @@ final class CircleDiaryFeedViewModel {
     func makeComposerViewModel() -> DiaryComposerViewModel {
         DiaryComposerViewModel(
             circleID: circleID,
+            circleName: circleName,
             author: currentMember,
             publishDiaryEntryUseCase: publishDiaryEntryUseCase
         )
